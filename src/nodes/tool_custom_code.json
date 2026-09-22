@@ -1,0 +1,68 @@
+{
+  "id": "tool_custom_code",
+  "version": "1.0",
+  "name": "Custom Code Tool",
+  "description": "Create a custom tool with your own JavaScript code",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Code2",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "my_tool",
+      "required": true,
+      "description": "Unique name for this tool"
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Custom tool that does...",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "Describe what this tool does (helps AI decide when to use it)"
+    },
+    {
+      "name": "schema",
+      "displayName": "Parameters Schema (JSON)",
+      "type": "json",
+      "default": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"param1\": {\n      \"type\": \"string\",\n      \"description\": \"First parameter\"\n    }\n  },\n  \"required\": [\"param1\"]\n}",
+      "description": "JSON Schema defining the parameters this tool accepts"
+    },
+    {
+      "name": "code",
+      "displayName": "Tool Code (async)",
+      "type": "javascript",
+      "default": "// Access parameters via args object\n// Example: const param1 = args.param1;\n\n// Your code here\nconst result = { success: true, data: args.param1 };\n\nreturn result;",
+      "description": "Async JavaScript code that executes when the tool is called"
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "let schema = node.properties.schema?.value;\nif (typeof schema === 'string') {\n  try {\n    schema = JSON.parse(schema);\n  } catch (e) {\n    helpers.error('Invalid JSON schema');\n    schema = { type: 'object', properties: {} };\n  }\n}\n\nreturn {\n  name: node.properties.toolName?.value || 'my_tool',\n  description: node.properties.toolDescription?.value || 'Custom tool',\n  enabled: node.properties.enabled?.value !== false,\n  schema: schema || { type: 'object', properties: {} },\n  code: node.properties.code?.value || 'return { success: true };'\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

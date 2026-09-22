@@ -1,0 +1,251 @@
+{
+  "id": "sql_database_node",
+  "version": "1.0",
+  "name": "SQL Database",
+  "description": "Execute SQL queries on PostgreSQL, MySQL, or SQLite databases. Supports SELECT, INSERT, UPDATE, DELETE.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#0EA5E9",
+  "icon": "Database",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "query",
+      "required": true,
+      "options": [
+        {
+          "id": "op-query",
+          "label": "Execute Query",
+          "value": "query"
+        },
+        {
+          "id": "op-insert",
+          "label": "Insert",
+          "value": "insert"
+        },
+        {
+          "id": "op-update",
+          "label": "Update",
+          "value": "update"
+        },
+        {
+          "id": "op-delete",
+          "label": "Delete",
+          "value": "delete"
+        }
+      ]
+    },
+    {
+      "name": "databaseType",
+      "displayName": "Database Type",
+      "type": "options",
+      "default": "sqlite",
+      "required": true,
+      "options": [
+        {
+          "id": "db-sqlite",
+          "label": "SQLite",
+          "value": "sqlite"
+        },
+        {
+          "id": "db-postgres",
+          "label": "PostgreSQL",
+          "value": "postgres"
+        },
+        {
+          "id": "db-mysql",
+          "label": "MySQL",
+          "value": "mysql"
+        }
+      ]
+    },
+    {
+      "name": "connectionString",
+      "displayName": "Connection String",
+      "type": "string",
+      "placeholder": "postgres://user:pass@localhost:5432/dbname",
+      "description": "Database connection string or file path for SQLite",
+      "displayOptions": {
+        "show": {
+          "databaseType": [
+            "postgres",
+            "mysql"
+          ]
+        }
+      }
+    },
+    {
+      "name": "sqlitePath",
+      "displayName": "SQLite File Path",
+      "type": "string",
+      "default": "./database.db",
+      "description": "Path to SQLite database file",
+      "displayOptions": {
+        "show": {
+          "databaseType": [
+            "sqlite"
+          ]
+        }
+      }
+    },
+    {
+      "name": "query",
+      "displayName": "SQL Query",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "placeholder": "SELECT * FROM users WHERE age > ?",
+      "description": "SQL query to execute. Use ? for parameters.",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "query"
+          ]
+        }
+      }
+    },
+    {
+      "name": "table",
+      "displayName": "Table Name",
+      "type": "string",
+      "required": true,
+      "placeholder": "users",
+      "description": "Name of the table",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "insert",
+            "update",
+            "delete"
+          ]
+        }
+      }
+    },
+    {
+      "name": "data",
+      "displayName": "Data",
+      "type": "json",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "description": "Data to insert/update (object or array of objects)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "insert",
+            "update"
+          ]
+        }
+      }
+    },
+    {
+      "name": "where",
+      "displayName": "WHERE Condition",
+      "type": "string",
+      "placeholder": "id = ? OR email = ?",
+      "description": "WHERE clause condition",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "update",
+            "delete"
+          ]
+        }
+      }
+    },
+    {
+      "name": "parameters",
+      "displayName": "Query Parameters",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Parameter",
+      "description": "Parameters for ? placeholders in SQL query. Will be bound in order.",
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "type",
+            "displayName": "Type",
+            "type": "options",
+            "default": "string",
+            "required": true,
+            "options": [
+              {
+                "value": "string",
+                "label": "String"
+              },
+              {
+                "value": "number",
+                "label": "Number"
+              },
+              {
+                "value": "boolean",
+                "label": "Boolean"
+              },
+              {
+                "value": "null",
+                "label": "NULL"
+              }
+            ],
+            "description": "Data type of the parameter"
+          },
+          {
+            "name": "value",
+            "displayName": "Value",
+            "type": "string",
+            "required": true,
+            "placeholder": "Enter value or {{data.field}}",
+            "description": "Parameter value. Can use {{data.field}} expressions",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "returnRows",
+      "displayName": "Return Rows",
+      "type": "boolean",
+      "default": true,
+      "description": "Return result rows (for SELECT queries)"
+    }
+  ],
+  "executionCode": "helpers.log('Starting SQL Database node');\n\nconst operation = node.properties.operation.value;\nconst databaseType = node.properties.databaseType.value;\nconst connectionString = node.properties.connectionString?.value;\nconst sqlitePath = node.properties.sqlitePath?.value || './database.db';\nlet query = node.properties.query?.value;\nconst table = node.properties.table?.value;\nlet dataToWrite = node.properties.data?.value;\nconst whereClause = node.properties.where?.value;\nlet parametersConfig = node.properties.parameters?.value || [];\nconst returnRows = node.properties.returnRows?.value !== false;\n\nhelpers.log(`Operation: ${operation}`);\nhelpers.log(`Database type: ${databaseType}`);\n\n// Resolve template variables\nif (typeof dataToWrite === 'string') {\n  if (dataToWrite === '{{data}}') {\n    dataToWrite = data;\n  } else {\n    try {\n      dataToWrite = JSON.parse(dataToWrite);\n    } catch (e) {\n      // Keep as is\n    }\n  }\n}\n\n// Process parameters based on format\nlet parameters = [];\nif (typeof parametersConfig === 'string') {\n  // Legacy JSON array format\n  try {\n    parameters = JSON.parse(parametersConfig);\n    helpers.log('Parsed legacy JSON parameters');\n  } catch (e) {\n    helpers.warn('Failed to parse parameters as JSON, using empty array');\n    parameters = [];\n  }\n} else if (Array.isArray(parametersConfig)) {\n  // New fixedCollection format\n  helpers.log(`Processing ${parametersConfig.length} parameter(s)`);\n  parameters = parametersConfig.map((param, idx) => {\n    let value = param.value;\n    const type = param.type || 'string';\n    \n    // Type conversion based on specified type\n    switch (type) {\n      case 'number':\n        value = Number(value);\n        break;\n      case 'boolean':\n        value = value === 'true' || value === true;\n        break;\n      case 'null':\n        value = null;\n        break;\n      case 'string':\n      default:\n        value = String(value);\n        break;\n    }\n    \n    helpers.log(`Parameter ${idx + 1}: ${type} = ${JSON.stringify(value)}`);\n    return value;\n  });\n}\n\n// Note: This is a template implementation\n// In production, you would use actual database drivers:\n// - better-sqlite3 for SQLite\n// - pg for PostgreSQL  \n// - mysql2 for MySQL\n\ntry {\n  switch (operation) {\n    case 'query': {\n      if (!query) {\n        return {\n          path: 'error',\n          error: 'SQL query is required'\n        };\n      }\n      \n      // Simulated query execution\n      // In production, replace with actual database connection\n      helpers.log(`Executing query: ${query}`);\n      helpers.log(`Parameters: ${JSON.stringify(parameters)}`);\n      \n      return {\n        success: true,\n        operation: 'query',\n        message: 'Query execution simulated. Install database driver for production use.',\n        query,\n        parameters,\n        databaseType,\n        note: 'Install: npm install better-sqlite3 (for SQLite), pg (for PostgreSQL), or mysql2 (for MySQL)'\n      };\n    }\n    \n    case 'insert': {\n      if (!table || !dataToWrite) {\n        return {\n          path: 'error',\n          error: 'Table name and data are required'\n        };\n      }\n      \n      // Build INSERT query\n      const rows = Array.isArray(dataToWrite) ? dataToWrite : [dataToWrite];\n      const columns = Object.keys(rows[0] || {});\n      const placeholders = columns.map(() => '?').join(', ');\n      const insertQuery = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`;\n      \n      helpers.log(`Built query: ${insertQuery}`);\n      \n      return {\n        success: true,\n        operation: 'insert',\n        message: 'Insert simulated. Install database driver for production use.',\n        query: insertQuery,\n        table,\n        rowCount: rows.length,\n        databaseType\n      };\n    }\n    \n    case 'update': {\n      if (!table || !dataToWrite) {\n        return {\n          path: 'error',\n          error: 'Table name and data are required'\n        };\n      }\n      \n      // Build UPDATE query\n      const columns = Object.keys(dataToWrite);\n      const setClause = columns.map(col => `${col} = ?`).join(', ');\n      const updateQuery = `UPDATE ${table} SET ${setClause}${whereClause ? ` WHERE ${whereClause}` : ''}`;\n      \n      helpers.log(`Built query: ${updateQuery}`);\n      \n      return {\n        success: true,\n        operation: 'update',\n        message: 'Update simulated. Install database driver for production use.',\n        query: updateQuery,\n        table,\n        whereClause,\n        databaseType\n      };\n    }\n    \n    case 'delete': {\n      if (!table) {\n        return {\n          path: 'error',\n          error: 'Table name is required'\n        };\n      }\n      \n      // Build DELETE query\n      const deleteQuery = `DELETE FROM ${table}${whereClause ? ` WHERE ${whereClause}` : ''}`;\n      \n      helpers.log(`Built query: ${deleteQuery}`);\n      \n      if (!whereClause) {\n        helpers.warn('DELETE without WHERE clause will delete all rows!');\n      }\n      \n      return {\n        success: true,\n        operation: 'delete',\n        message: 'Delete simulated. Install database driver for production use.',\n        query: deleteQuery,\n        table,\n        whereClause,\n        warning: whereClause ? null : 'No WHERE clause - would delete all rows',\n        databaseType\n      };\n    }\n    \n    default:\n      return {\n        path: 'error',\n        error: `Unknown operation: ${operation}`\n      };\n  }\n} catch (error) {\n  helpers.error('SQL operation failed:', error);\n  return {\n    path: 'error',\n    error: error.message,\n    details: error.stack\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Template implementation. Install database drivers for production: better-sqlite3, pg, or mysql2"
+  }
+}

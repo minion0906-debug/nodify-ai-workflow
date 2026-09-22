@@ -1,0 +1,54 @@
+{
+  "id": "alert_node",
+  "version": "1.0",
+  "name": "Alert",
+  "description": "Displays a browser alert with a custom message.",
+  "group": "Layout",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#F59E0B",
+  "icon": "Bell",
+  "executionEnvironment": "client",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "message",
+      "displayName": "Alert Message",
+      "type": "string",
+      "default": "Hello from Nodify!",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "The message to display in the alert window."
+    },
+    {
+      "name": "showData",
+      "displayName": "Append Input Data",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, the node will append JSON of the input data to the alert message."
+    }
+  ],
+  "clientExecutionCode": "const message = node.properties.message.value || 'Alert triggered!';\nconst appendData = node.properties.showData.value;\nlet finalMessage = message;\nif (appendData && data) {\n  const dataStr = JSON.stringify(data, null, 2);\n  finalMessage = message + '\\n\\nData: ' + dataStr;\n}\nhelpers.alert(finalMessage);\nreturn { ...data, alerted: true, alertMessage: finalMessage };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-12"
+  }
+}

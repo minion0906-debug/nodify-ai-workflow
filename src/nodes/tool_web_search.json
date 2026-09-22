@@ -1,0 +1,59 @@
+{
+  "id": "tool_web_search",
+  "version": "1.0",
+  "name": "Web Search Tool",
+  "description": "Tool for AI Agent to search the web using DuckDuckGo",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Search",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "web_search",
+      "required": true
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Search the web using DuckDuckGo and return relevant results with title, snippet, and URL.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "maxResults",
+      "displayName": "Max Results",
+      "type": "number",
+      "default": 5,
+      "description": "Maximum number of search results to return"
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "return {\n  name: node.properties.toolName?.value || 'web_search',\n  description: node.properties.toolDescription?.value || 'Search the web',\n  enabled: node.properties.enabled?.value !== false,\n  schema: {\n    type: 'object',\n    properties: {\n      query: {\n        type: 'string',\n        description: 'The search query'\n      },\n      maxResults: {\n        type: 'number',\n        description: 'Maximum number of results (default: 5)'\n      }\n    },\n    required: ['query']\n  },\n  code: `const fetch = (await import('node-fetch')).default;\nconst maxResults = args.maxResults || 5;\nconst url = \\`https://html.duckduckgo.com/html/?q=\\${encodeURIComponent(args.query)}\\`;\nconst response = await fetch(url, {\n  headers: {\n    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'\n  }\n});\nconst html = await response.text();\nconst cheerio = require('cheerio');\nconst $ = cheerio.load(html);\nconst results = [];\n$('.result__body').slice(0, maxResults).each((i, el) => {\n  const title = $(el).find('.result__title').text().trim();\n  const snippet = $(el).find('.result__snippet').text().trim();\n  const link = $(el).find('.result__url').attr('href');\n  if (title && link) {\n    results.push({ title, snippet, url: link });\n  }\n});\nreturn { query: args.query, results, count: results.length };`\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "id": "demo_node",
+  "version": "1.0",
+  "name": "Demo Node",
+  "description": "A node to demonstrate all available property types.",
+  "group": "Other",
+  "category": "other",
+  "shape": "2x2",
+  "color": "#e11d48",
+  "icon": "Beaker",
+  "inputs": [],
+  "outputs": [],
+  "properties": [
+    {
+      "name": "info_text",
+      "displayName": "This node showcases all available UI components for node properties.",
+      "type": "notice",
+      "ui": {
+        "variant": "default"
+      }
+    },
+    {
+      "name": "separator1",
+      "displayName": "Inputs",
+      "type": "separator"
+    },
+    {
+      "name": "string_prop",
+      "displayName": "Text Field",
+      "type": "string",
+      "default": "Hello World",
+      "placeholder": "Enter some text"
+    },
+    {
+      "name": "number_prop",
+      "displayName": "Number Field",
+      "type": "number",
+      "default": 42,
+      "placeholder": "Enter a number"
+    },
+    {
+      "name": "boolean_prop",
+      "displayName": "Boolean Switch",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "name": "separator2",
+      "displayName": "Choices",
+      "type": "separator"
+    },
+    {
+      "name": "options_prop",
+      "displayName": "Dropdown Select",
+      "type": "options",
+      "default": "option2",
+      "options": [
+        {
+          "id": "opt1",
+          "label": "Option 1",
+          "value": "option1"
+        },
+        {
+          "id": "opt2",
+          "label": "Option 2",
+          "value": "option2"
+        },
+        {
+          "id": "opt3",
+          "label": "Option 3",
+          "value": "option3"
+        }
+      ]
+    },
+    {
+      "name": "radio_prop",
+      "displayName": "Radio Group",
+      "type": "radio",
+      "default": "radio2",
+      "options": [
+        {
+          "id": "rad1",
+          "label": "Radio 1",
+          "value": "radio1"
+        },
+        {
+          "id": "rad2",
+          "label": "Radio 2",
+          "value": "radio2"
+        }
+      ]
+    },
+    {
+      "name": "checkbox_prop",
+      "displayName": "Checkboxes",
+      "type": "checkbox",
+      "default": {
+        "check1": true,
+        "check3": true
+      },
+      "options": [
+        {
+          "id": "chk1",
+          "label": "Checkbox 1",
+          "value": "check1"
+        },
+        {
+          "id": "chk2",
+          "label": "Checkbox 2",
+          "value": "check2"
+        },
+        {
+          "id": "chk3",
+          "label": "Checkbox 3",
+          "value": "check3"
+        }
+      ]
+    },
+    {
+      "name": "separator3",
+      "displayName": "Actions",
+      "type": "separator"
+    },
+    {
+      "name": "button_prop",
+      "displayName": "Copy to Clipboard",
+      "type": "inputButton",
+      "behavior": {
+        "action": "copyToClipboard",
+        "value": "You clicked the button!"
+      }
+    },
+    {
+      "name": "warning_text",
+      "displayName": "This is a destructive action notice.",
+      "type": "notice",
+      "ui": {
+        "variant": "destructive"
+      }
+    }
+  ]
+}

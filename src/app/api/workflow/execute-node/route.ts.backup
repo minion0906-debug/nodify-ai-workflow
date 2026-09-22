@@ -1,0 +1,97 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getNodeDefinition } from '@/lib/nodes';
+import { getFirebaseAdmin } from '@/firebase/admin';
+import { DecodedIdToken } from 'firebase-admin/auth';
+
+// Helper to get user from Authorization header
+async function getUserFromRequest(request: NextRequest): Promise<DecodedIdToken | null> {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader) return null;
+  const token = authHeader.split('Bearer ')[1];
+  if (!token) return null;
+  try {
+    const adminAuth = getFirebaseAdmin().auth();
+    return await adminAuth.verifyIdToken(token);
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { node, inputData, executionContext } = body;
+
+    if (!node) {
+      return NextResponse.json({ error: 'Node data is required' }, { status: 400 });
+    }
+
+    const definition = getNodeDefinition(node.type);
+    if (!definition) {
+      return NextResponse.json({ error: `No definition for node type '${node.type}'` }, { status: 404 });
+    }
+
+    if (!definition.executionCode) {
+      return NextResponse.json(inputData);
+    }
+
+    const { db } = getFirebaseAdmin();
+    const services = {
+      db,
+      user,
+    };
+
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    const executor = new AsyncFunction(
+      'node',
+      'data',
+      'items',
+      'execution',
+      '$',
+      '$input',
+      '$json',
+      '$node',
+      'helpers',
+      'services',
+      'env',
+      definition.executionCode
+    );
+
+    const items = Array.isArray(inputData) ? inputData : (inputData ? [inputData] : []);
+    const $input = {
+      first: () => items[0] || {},
+      last: () => items[items.length - 1] || {},
+      all: () => items,
+      item: (index: number) => items[index] || {},
+    };
+    const helpers = {
+      log: (...args: any[]) => console.log(`[${definition.name}]`, ...args),
+    };
+
+    const output = await executor(
+      node,
+      items[0] || {},
+      items,
+      executionContext,
+      executionContext,
+      $input,
+      items[0] || {},
+      node,
+      helpers,
+      services,
+      process.env
+    );
+
+    return NextResponse.json(output);
+  } catch (error) {
+    const errorMessage = (error instanceof Error) ? error.message : 'An unknown error occurred';
+    console.error('[API:execute-node] Error:', error);
+    return NextResponse.json({ error: 'Failed to execute node', details: errorMessage }, { status: 500 });
+  }
+}

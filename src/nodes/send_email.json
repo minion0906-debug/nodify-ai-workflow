@@ -1,0 +1,166 @@
+{
+  "id": "send_email",
+  "version": "1.0",
+  "name": "Send Email",
+  "description": "Send an email using SMTP credentials.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#E11D48",
+  "icon": "Mail",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Sent",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "smtpServer",
+      "displayName": "SMTP Server",
+      "type": "string",
+      "default": "smtp.gmail.com"
+    },
+    {
+      "name": "smtpPort",
+      "displayName": "SMTP Port",
+      "type": "number",
+      "default": 587
+    },
+    {
+      "name": "username",
+      "displayName": "Username",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "name": "password",
+      "displayName": "Password",
+      "type": "string",
+      "default": "",
+      "ui": {
+        "mask": "password"
+      }
+    },
+    {
+      "name": "recipients",
+      "displayName": "Recipients",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Recipient",
+      "description": "Email recipients. Can add multiple To, CC, and BCC recipients.",
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "type",
+            "displayName": "Type",
+            "type": "options",
+            "default": "to",
+            "required": true,
+            "options": [
+              {
+                "value": "to",
+                "label": "To"
+              },
+              {
+                "value": "cc",
+                "label": "CC"
+              },
+              {
+                "value": "bcc",
+                "label": "BCC"
+              }
+            ],
+            "description": "Recipient type"
+          },
+          {
+            "name": "email",
+            "displayName": "Email Address",
+            "type": "string",
+            "required": true,
+            "placeholder": "user@example.com or {{data.email}}",
+            "description": "Email address. Can use {{data.field}} expressions",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "subject",
+      "displayName": "Subject",
+      "type": "string",
+      "default": "Welcome, {{data.name}}!",
+      "ui": {
+        "component": "code"
+      }
+    },
+    {
+      "name": "body",
+      "displayName": "Body (HTML)",
+      "type": "string",
+      "default": "<p>Hello {{data.name}}!</p><p>This is a test.</p><p>Invalid variable: {{data.nonexistent}}</p>",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "attachments",
+      "displayName": "Attachments",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Attachment",
+      "description": "Files to attach to the email. Can reference files from previous nodes.",
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "filename",
+            "displayName": "Filename",
+            "type": "string",
+            "required": true,
+            "placeholder": "document.pdf",
+            "description": "Name of the attached file"
+          },
+          {
+            "name": "content",
+            "displayName": "Content",
+            "type": "string",
+            "required": true,
+            "placeholder": "{{data.fileContent}} or base64 string",
+            "description": "File content (base64 encoded) or reference to file data",
+            "ui": {
+              "component": "code"
+            }
+          },
+          {
+            "name": "contentType",
+            "displayName": "Content Type",
+            "type": "string",
+            "placeholder": "application/pdf",
+            "description": "MIME type of the attachment (e.g., application/pdf, image/png)"
+          }
+        ]
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Starting Send Email node');\n\nconst smtpServer = node.properties.smtpServer.value;\nconst smtpPort = node.properties.smtpPort.value;\nconst username = node.properties.username.value;\nconst password = node.properties.password.value;\nconst recipientsConfig = node.properties.recipients?.value || [];\nconst subject = node.properties.subject.value;\nconst body = node.properties.body.value;\nconst attachmentsConfig = node.properties.attachments?.value || [];\n\nhelpers.log(`SMTP: ${smtpServer}:${smtpPort}`);\n\n// Process recipients\nconst toRecipients = [];\nconst ccRecipients = [];\nconst bccRecipients = [];\n\nif (Array.isArray(recipientsConfig) && recipientsConfig.length > 0) {\n  helpers.log(`Processing ${recipientsConfig.length} recipient(s)`);\n  for (const recipient of recipientsConfig) {\n    const email = recipient.email;\n    const type = recipient.type || 'to';\n    \n    if (!email) continue;\n    \n    switch (type) {\n      case 'to':\n        toRecipients.push(email);\n        break;\n      case 'cc':\n        ccRecipients.push(email);\n        break;\n      case 'bcc':\n        bccRecipients.push(email);\n        break;\n    }\n  }\n  \n  helpers.log(`To: ${toRecipients.length}, CC: ${ccRecipients.length}, BCC: ${bccRecipients.length}`);\n} else {\n  helpers.warn('No recipients configured');\n}\n\n// Process attachments\nconst attachments = [];\nif (Array.isArray(attachmentsConfig) && attachmentsConfig.length > 0) {\n  helpers.log(`Processing ${attachmentsConfig.length} attachment(s)`);\n  for (const attachment of attachmentsConfig) {\n    if (!attachment.filename || !attachment.content) {\n      helpers.warn('Skipping attachment with missing filename or content');\n      continue;\n    }\n    \n    attachments.push({\n      filename: attachment.filename,\n      content: attachment.content,\n      contentType: attachment.contentType || 'application/octet-stream'\n    });\n    \n    helpers.log(`Attachment: ${attachment.filename} (${attachment.contentType || 'default'})`);\n  }\n}\n\n// Validate required fields\nif (toRecipients.length === 0) {\n  helpers.error('No To recipients specified');\n  return {\n    error: 'At least one To recipient is required'\n  };\n}\n\nif (!subject) {\n  helpers.warn('Email has no subject');\n}\n\ntry {\n  // Note: This requires nodemailer to be installed\n  // npm install nodemailer\n  \n  const nodemailer = await import('nodemailer');\n  \n  helpers.log('Creating SMTP transporter...');\n  const transporter = nodemailer.default.createTransport({\n    host: smtpServer,\n    port: smtpPort,\n    auth: {\n      user: username,\n      pass: password\n    }\n  });\n  \n  helpers.log('Sending email...');\n  const mailOptions = {\n    from: username,\n    to: toRecipients.join(', '),\n    subject: subject,\n    html: body\n  };\n  \n  if (ccRecipients.length > 0) {\n    mailOptions.cc = ccRecipients.join(', ');\n  }\n  \n  if (bccRecipients.length > 0) {\n    mailOptions.bcc = bccRecipients.join(', ');\n  }\n  \n  if (attachments.length > 0) {\n    mailOptions.attachments = attachments;\n  }\n  \n  const info = await transporter.sendMail(mailOptions);\n  \n  helpers.log(`Email sent successfully: ${info.messageId}`);\n  \n  return {\n    success: true,\n    messageId: info.messageId,\n    to: toRecipients,\n    cc: ccRecipients,\n    bcc: bccRecipients,\n    attachmentCount: attachments.length,\n    subject\n  };\n  \n} catch (error) {\n  helpers.error('Failed to send email:', error.message);\n  return {\n    error: error.message,\n    details: error.stack,\n    note: 'Make sure nodemailer is installed: npm install nodemailer'\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

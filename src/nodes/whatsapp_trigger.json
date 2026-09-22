@@ -1,0 +1,30 @@
+{
+  "id": "whatsapp_trigger",
+  "version": "1.0",
+  "name": "WhatsApp (Cloud API)",
+  "description": "Inicia el flujo cuando llegan eventos de WhatsApp Business Cloud API (mensajes entrantes, estados, etc.)",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "circle",
+  "color": "#25D366",
+  "icon": "MessageCircle",
+  "inputs": [],
+  "outputs": [
+    { "id": "main", "label": "Salida", "position": "right", "type": "json", "slot": 1 }
+  ],
+  "properties": [
+    { "name": "credential", "displayName": "Credencial (WhatsApp Cloud API)", "type": "credentials", "typeOptions": { "credentialType": "whatsapp" }, "required": false, "description": "Selecciona la credencial que contiene App Secret y Access Token (estilo n8n)." },
+    { "name": "whatsappId", "displayName": "WhatsApp ID", "type": "string", "default": "not_generated", "required": true, "description": "ID único de este webhook de WhatsApp. Se genera automáticamente.", "options": { "readOnly": true } },
+
+    { "name": "separatorVerify", "displayName": "Verificación Webhook", "type": "separator" },
+    { "name": "verifyToken", "displayName": "Verify Token", "type": "string", "default": "", "required": true, "description": "Token de verificación configurable en Meta (igual que en n8n)." },
+    { "name": "appSecret", "displayName": "App Secret (opcional)", "type": "string", "default": "", "description": "Secret de la app para validar X-Hub-Signature-256; si lo dejas vacío, se toma de la credencial." },
+
+    { "name": "separatorUrls", "displayName": "URLs del Webhook", "type": "separator" },
+    { "name": "notice", "displayName": "Instrucciones", "type": "notice", "default": "Usa la URL de Producción en la configuración de Webhooks de tu App de Meta. La URL de Test es solo para depuración (no ejecuta el flujo)." },
+    { "name": "testUrl", "displayName": "Test URL", "type": "inputButton", "behavior": { "action": "copyToClipboard", "value": "{{window.location.origin}}/api/whatsapp/test/{{node.config.whatsappId}}" }, "description": "URL de pruebas (dev)" },
+    { "name": "prodUrl", "displayName": "Production URL", "type": "inputButton", "behavior": { "action": "copyToClipboard", "value": "{{window.location.origin}}/api/whatsapp/prod/{{node.config.whatsappId}}" }, "description": "URL de producción (ejecuta el flujo si está activo)" }
+  ],
+  "executionCode": "// Normaliza el payload de WhatsApp Cloud API\n// El payload original está disponible en 'data' (que incluye body, headers, query...)\n\nconst raw = data || {};\nconst body = raw.body || {};\nconst query = raw.query || {};\nconst headers = raw.headers || {};\n\nlet event = { provider: 'whatsapp', type: 'unknown', message: null, contact: null, statuses: null, raw: body };\n\ntry {\n  const entry = Array.isArray(body.entry) ? body.entry[0] : null;\n  const change = entry && Array.isArray(entry.changes) ? entry.changes[0] : null;\n  const value = change ? change.value || {} : {};\n\n  // Mensajes entrantes\n  if (Array.isArray(value.messages) && value.messages.length > 0) {\n    const msg = value.messages[0];\n    event.type = 'message';\n    event.message = {\n      id: msg.id,\n      from: msg.from,\n      timestamp: msg.timestamp,\n      type: msg.type,\n      text: msg.text?.body,\n      image: msg.image,\n      document: msg.document,\n      audio: msg.audio,\n      video: msg.video,\n      interactive: msg.interactive,\n      button: msg.button\n    };\n    if (Array.isArray(value.contacts) && value.contacts.length > 0) {\n      event.contact = value.contacts[0];\n    }\n  }\n\n  // Estados de mensajes (entregados, leídos, etc.)\n  if (Array.isArray(value.statuses) && value.statuses.length > 0) {\n    event.type = event.type === 'unknown' ? 'status' : event.type;\n    event.statuses = value.statuses;\n  }\n} catch (e) {\n  // Si algo falla, devolvemos el raw\n}\n\nreturn { query, headers, event };",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-29", "updatedAt": "2025-10-29" }
+}

@@ -1,0 +1,52 @@
+{
+  "id": "tool_json_query",
+  "version": "1.0",
+  "name": "JSON Query Tool",
+  "description": "Tool for AI Agent to query and extract data from JSON using JSONPath",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Code",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "json_query",
+      "required": true
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Query and extract data from JSON using JSONPath syntax. Returns the matched values.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "return {\n  name: node.properties.toolName?.value || 'json_query',\n  description: node.properties.toolDescription?.value || 'Query JSON with JSONPath',\n  enabled: node.properties.enabled?.value !== false,\n  schema: {\n    type: 'object',\n    properties: {\n      jsonData: {\n        type: 'object',\n        description: 'The JSON object to query'\n      },\n      path: {\n        type: 'string',\n        description: 'JSONPath expression (e.g., \"$.users[*].name\")'\n      }\n    },\n    required: ['jsonData', 'path']\n  },\n  code: `const jp = require('jsonpath');\nconst result = jp.query(args.jsonData, args.path);\nreturn { path: args.path, matches: result, count: result.length };`\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

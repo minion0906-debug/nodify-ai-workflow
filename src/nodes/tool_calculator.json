@@ -1,0 +1,52 @@
+{
+  "id": "tool_calculator",
+  "version": "1.0",
+  "name": "Calculator Tool",
+  "description": "Tool for AI Agent to perform mathematical calculations",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Calculator",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "calculate",
+      "required": true
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Perform mathematical calculations safely. Supports basic arithmetic, trigonometry, and more.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "return {\n  name: node.properties.toolName?.value || 'calculate',\n  description: node.properties.toolDescription?.value || 'Perform math calculations',\n  enabled: node.properties.enabled?.value !== false,\n  schema: {\n    type: 'object',\n    properties: {\n      expression: {\n        type: 'string',\n        description: 'Mathematical expression to evaluate (e.g., \"2 + 2\", \"sqrt(16)\", \"sin(PI/2)\")'\n      }\n    },\n    required: ['expression']\n  },\n  code: `const mathjs = require('mathjs');\ntry {\n  const result = mathjs.evaluate(args.expression);\n  return { expression: args.expression, result };\n} catch (error) {\n  throw new Error(\\`Calculation error: \\${error.message}\\`);\n}`\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

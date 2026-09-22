@@ -1,0 +1,51 @@
+{
+  "id": "tmpfiles_upload",
+  "version": "1.0",
+  "name": "Tmpfiles Upload",
+  "description": "Upload a file to tmpfiles.org (auto-deletes after 60 minutes).",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#A25B3F",
+  "icon": "Upload",
+  "inputs": [
+    { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 }
+  ],
+  "outputs": [
+    { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }
+  ],
+  "properties": [
+    {
+      "name": "sourceMode",
+      "displayName": "Source",
+      "type": "options",
+      "default": "filePath",
+      "options": [
+        { "value": "filePath", "label": "Use File Path" },
+        { "value": "input", "label": "From Input Data" }
+      ]
+    },
+    {
+      "name": "filePath",
+      "displayName": "File Path",
+      "type": "string",
+      "placeholder": "/absolute/path or {{ $['Form Submit'].output.files.resume }}",
+      "description": "Local path, URL, or expression",
+      "default": "{{data.filePath}}",
+      "required": true,
+      "ui": { "component": "code" },
+      "displayOptions": { "show": { "sourceMode": ["filePath"] } }
+    },
+    {
+      "name": "inputPath",
+      "displayName": "Input Path (dot notation)",
+      "type": "string",
+      "placeholder": "files.resume",
+      "description": "Read URL/path from input data (e.g., files.resume, file.path)",
+      "default": "file.path",
+      "displayOptions": { "show": { "sourceMode": ["input"] } }
+    }
+  ],
+  "executionEnvironment": "server",
+  "executionCode": "try {\n  helpers.log('Starting Tmpfiles Upload node');\n\n  const fetch = (await import('node-fetch')).default;\n  const FormData = (await import('form-data')).default;\n  const fs = (await import('fs')).promises;\n  const path = (await import('path')).default;\n\n  const sourceMode = node.properties.sourceMode?.value || 'filePath';\n  helpers.log(`Source mode: ${sourceMode}`);\n\n  const getByPath = (obj, p) => {\n    if (!obj || !p) return undefined;\n    try { return p.split('.').reduce((o,k)=> (o && o[k] !== undefined ? o[k] : undefined), obj); } catch { return undefined; }\n  };\n\n  const tryEval = (expr) => {\n    try {\n      const fn = new Function('execution', '$', '$input', '$json', '$node', 'node', 'data', 'return ' + expr);\n      return fn(execution, $, $input, $json, $node, node, data);\n    } catch { return null; }\n  };\n\n  const isUrl = (s) => typeof s === 'string' && /^https?:\\/\\//i.test(s);\n\n  const resolveSource = () => {\n    let v = node.properties.filePath?.value;\n    if (sourceMode === 'input') {\n      const ip = node.properties.inputPath?.value || '';\n      let candidate = ip ? getByPath(data, ip) : undefined;\n      if (!candidate) {\n        const candidates = ['fileUrl','files.url','file.url','filePath','files.path','file.path','path','output.filePath','output.path'];\n        for (const key of candidates) {\n          const val = getByPath(data, key);\n          if (typeof val === 'string' && val) { candidate = val; break; }\n        }\n      }\n      if (typeof candidate === 'string') v = candidate;\n    }\n\n    if (!v || typeof v !== 'string') return '';\n    const trimmed = v.trim();\n\n    if (/^(\\$|execution|\\$node)\\[/.test(trimmed) || trimmed.includes('$[')) {\n      const ev = tryEval(trimmed);\n      if (typeof ev === 'string' && ev) return ev;\n    }\n\n    const mustache = trimmed.match(/^\\{\\{\\s*(.+)\\s*\\}\\}$/);\n    if (mustache) {\n      const ev = tryEval(mustache[1]);\n      if (typeof ev === 'string' && ev) return ev;\n    }\n\n    return trimmed;\n  };\n\n  const resolved = resolveSource();\n  helpers.log(`Resolved file source: ${resolved}`);\n  \n  if (!resolved) {\n    helpers.error('No file source provided or found in input');\n    return { error: 'No file source provided or found in input' };\n  }\n\n  let fileName = 'upload_' + Date.now();\n  const form = new FormData();\n\n  if (isUrl(resolved)) {\n    helpers.log(`Downloading file from URL: ${resolved}`);\n    const res = await fetch(resolved);\n    if (!res.ok) {\n      helpers.error(`Failed to download file, status: ${res.status}`);\n      return { error: 'Failed to download file', status: res.status };\n    }\n    const ab = await res.arrayBuffer();\n    const buffer = Buffer.from(ab);\n    form.append('file', buffer, { filename: fileName });\n    helpers.log(`Downloaded ${buffer.length} bytes`);\n  } else {\n    let absPath = resolved;\n    const cwd = process.cwd();\n\n    // Check if it's a Unix-style absolute path starting with / (common in file uploads)\n    const isUnixStylePath = absPath.startsWith('/') && !absPath.match(/^[A-Za-z]:/);\n\n    // If path is relative or Unix-style absolute, try multiple resolution strategies\n    if (!path.isAbsolute(absPath) || isUnixStylePath) {\n      helpers.log(`Original path: ${absPath}`);\n      helpers.log(`Current working directory: ${cwd}`);\n\n      // Remove leading slash for Unix-style paths\n      const cleanPath = isUnixStylePath ? absPath.substring(1) : absPath;\n      helpers.log(`Clean path: ${cleanPath}`);\n\n      // Try different base paths\n      const possiblePaths = [\n        path.resolve(cwd, cleanPath),\n        path.resolve(cwd, 'public', cleanPath),\n        path.resolve(cwd, cleanPath.replace(/^public[\\\\\\/]/, ''))\n      ];\n\n      helpers.log(`Trying paths: ${JSON.stringify(possiblePaths)}`);\n\n      let found = false;\n      for (const tryPath of possiblePaths) {\n        try {\n          await fs.access(tryPath);\n          absPath = tryPath;\n          found = true;\n          helpers.log(`File found at: ${absPath}`);\n          break;\n        } catch {\n          // Continue to next path\n        }\n      }\n\n      if (!found) {\n        helpers.error(`File not found in any of the attempted paths`);\n      }\n    } else {\n      helpers.log(`Using absolute path: ${absPath}`);\n    }\n    \n    let buffer;\n    try {\n      buffer = await fs.readFile(absPath);\n      fileName = path.basename(absPath);\n      helpers.log(`Successfully read file: ${fileName} (${buffer.length} bytes)`);\n    } catch (e) {\n      helpers.error(`Failed to read file: ${absPath}`);\n      helpers.error(`Error: ${e.message}`);\n      return { error: 'Failed to read file: ' + absPath, details: e.message };\n    }\n    \n    form.append('file', buffer, { filename: fileName });\n  }\n\n  helpers.log('Uploading file to tmpfiles.org...');\n  const uploadRes = await fetch('https://tmpfiles.org/api/v1/upload', { \n    method: 'POST', \n    body: form,\n    headers: form.getHeaders()\n  });\n  \n  const text = await uploadRes.text();\n  let json; \n  try { \n    json = JSON.parse(text); \n  } catch { \n    json = { raw: text }; \n  }\n  \n  if (!uploadRes.ok) {\n    helpers.error(`Upload failed with status: ${uploadRes.status}`);\n    return { error: 'Upload failed', status: uploadRes.status, details: json };\n  }\n\n  const pick = (...vals) => vals.find(v => typeof v === 'string' && v);\n  const url = pick(\n    json?.url, json?.download_url, json?.link, json?.full_url, json?.direct_link, json?.direct_url, json?.file_url,\n    json?.data?.url, json?.data?.download_url, json?.data?.link, json?.data?.file_url,\n    json?.result?.url\n  );\n\n  helpers.log(`Upload successful! URL: ${url}`);\n  return { success: true, url: url || null, response: json, source: resolved, uploadedName: fileName };\n\n} catch (e) { \n  helpers.error(`Unexpected error: ${e.message}`);\n  return { error: e.message, stack: e.stack }; \n}"
+}

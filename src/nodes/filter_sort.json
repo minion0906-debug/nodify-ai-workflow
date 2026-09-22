@@ -1,0 +1,264 @@
+{
+  "id": "filter_sort_node",
+  "version": "1.0",
+  "name": "Filter & Sort",
+  "description": "Filter arrays by conditions, find items, remove duplicates, and sort by fields with custom logic.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#8B5CF6",
+  "icon": "Filter",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "array",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "array",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "filter",
+      "required": true,
+      "options": [
+        {
+          "id": "op-filter",
+          "label": "Filter",
+          "value": "filter"
+        },
+        {
+          "id": "op-find",
+          "label": "Find First",
+          "value": "find"
+        },
+        {
+          "id": "op-sort",
+          "label": "Sort",
+          "value": "sort"
+        },
+        {
+          "id": "op-unique",
+          "label": "Remove Duplicates",
+          "value": "unique"
+        },
+        {
+          "id": "op-limit",
+          "label": "Limit/Slice",
+          "value": "limit"
+        }
+      ]
+    },
+    {
+      "name": "inputArray",
+      "displayName": "Input Array",
+      "type": "string",
+      "default": "{{data}}",
+      "required": true,
+      "description": "Array to process",
+      "ui": {
+        "component": "code"
+      }
+    },
+    {
+      "name": "filterConditions",
+      "displayName": "Filter Conditions",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Condition",
+      "description": "Define conditions to filter items. All conditions must match (AND logic).",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "filter",
+            "find"
+          ]
+        }
+      },
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "field",
+            "displayName": "Field",
+            "type": "string",
+            "required": true,
+            "placeholder": "price, user.age, status",
+            "description": "Field path to filter by (supports nested paths like 'user.name')"
+          },
+          {
+            "name": "operator",
+            "displayName": "Operator",
+            "type": "options",
+            "default": "equals",
+            "required": true,
+            "options": [
+              {
+                "value": "equals",
+                "label": "Equals (==)"
+              },
+              {
+                "value": "notEquals",
+                "label": "Not Equals (!=)"
+              },
+              {
+                "value": "greaterThan",
+                "label": "Greater Than (>)"
+              },
+              {
+                "value": "lessThan",
+                "label": "Less Than (<)"
+              },
+              {
+                "value": "greaterThanOrEqual",
+                "label": "Greater or Equal (>=)"
+              },
+              {
+                "value": "lessThanOrEqual",
+                "label": "Less or Equal (<=)"
+              },
+              {
+                "value": "contains",
+                "label": "Contains"
+              },
+              {
+                "value": "startsWith",
+                "label": "Starts With"
+              },
+              {
+                "value": "endsWith",
+                "label": "Ends With"
+              },
+              {
+                "value": "in",
+                "label": "In Array"
+              },
+              {
+                "value": "exists",
+                "label": "Field Exists"
+              },
+              {
+                "value": "empty",
+                "label": "Is Empty"
+              }
+            ]
+          },
+          {
+            "name": "value",
+            "displayName": "Value",
+            "type": "string",
+            "placeholder": "Value to compare",
+            "description": "Value to compare against. Can use {{data.field}}",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sortFields",
+      "displayName": "Sort Fields",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Sort Field",
+      "description": "Define fields to sort by. First field has priority, then second, etc.",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "sort"
+          ]
+        }
+      },
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "field",
+            "displayName": "Field",
+            "type": "string",
+            "required": true,
+            "placeholder": "price, createdAt, user.name",
+            "description": "Field to sort by (supports nested paths)"
+          },
+          {
+            "name": "direction",
+            "displayName": "Direction",
+            "type": "options",
+            "default": "asc",
+            "required": true,
+            "options": [
+              {
+                "value": "asc",
+                "label": "Ascending (A→Z, 0→9)"
+              },
+              {
+                "value": "desc",
+                "label": "Descending (Z→A, 9→0)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "uniqueField",
+      "displayName": "Unique By Field",
+      "type": "string",
+      "placeholder": "id, email (leave empty for full object comparison)",
+      "description": "Field to determine uniqueness",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "unique"
+          ]
+        }
+      }
+    },
+    {
+      "name": "limitCount",
+      "displayName": "Limit",
+      "type": "number",
+      "default": 10,
+      "description": "Maximum number of items to return",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "limit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "limitOffset",
+      "displayName": "Offset",
+      "type": "number",
+      "default": 0,
+      "description": "Number of items to skip",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "limit"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Starting Filter & Sort node');\n\nconst operation = node.properties.operation.value;\nlet inputArray = node.properties.inputArray.value;\nlet filterConditions = node.properties.filterConditions?.value || [];\nlet sortFields = node.properties.sortFields?.value || [];\nconst uniqueField = node.properties.uniqueField?.value;\nconst limitCount = node.properties.limitCount?.value || 10;\nconst limitOffset = node.properties.limitOffset?.value || 0;\n\nhelpers.log(`Operation: ${operation}`);\n\n// Resolve template variables\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') return data;\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const path = match[1].split('.');\n        let result = data;\n        for (const part of path) {\n          result = result?.[part];\n        }\n        return result;\n      }\n    }\n  }\n  return val;\n};\n\ninputArray = resolveValue(inputArray);\n\n// Ensure it's an array\nif (!Array.isArray(inputArray)) {\n  helpers.error('Input is not an array');\n  return {\n    error: 'Input is not an array',\n    receivedType: typeof inputArray\n  };\n}\n\nhelpers.log(`Input array length: ${inputArray.length}`);\n\n// Helper to get nested value\nconst getNestedValue = (obj, path) => {\n  if (!path) return obj;\n  const keys = path.split('.');\n  let result = obj;\n  for (const key of keys) {\n    if (result === null || result === undefined) return undefined;\n    result = result[key];\n  }\n  return result;\n};\n\n// Helper to compare values\nconst compareValues = (a, b, operator) => {\n  switch (operator) {\n    case 'equals':\n      return a == b;\n    case 'notEquals':\n      return a != b;\n    case 'greaterThan':\n      return a > b;\n    case 'lessThan':\n      return a < b;\n    case 'greaterThanOrEqual':\n      return a >= b;\n    case 'lessThanOrEqual':\n      return a <= b;\n    case 'contains':\n      return String(a).includes(String(b));\n    case 'startsWith':\n      return String(a).startsWith(String(b));\n    case 'endsWith':\n      return String(a).endsWith(String(b));\n    case 'in':\n      return Array.isArray(b) ? b.includes(a) : false;\n    case 'exists':\n      return a !== undefined && a !== null;\n    case 'empty':\n      return !a || (Array.isArray(a) && a.length === 0) || (typeof a === 'string' && a.trim() === '');\n    default:\n      return false;\n  }\n};\n\ntry {\n  let result;\n  \n  switch (operation) {\n    case 'filter': {\n      if (!Array.isArray(filterConditions) || filterConditions.length === 0) {\n        helpers.warn('No filter conditions defined, returning all items');\n        return {\n          success: true,\n          operation: 'filter',\n          result: inputArray,\n          originalCount: inputArray.length,\n          filteredCount: inputArray.length,\n          conditions: []\n        };\n      }\n      \n      helpers.log(`Filtering with ${filterConditions.length} condition(s) (AND logic)`);\n      \n      result = inputArray.filter(item => {\n        // All conditions must match (AND logic)\n        return filterConditions.every((condition, idx) => {\n          const fieldValue = getNestedValue(item, condition.field);\n          const conditionValue = resolveValue(condition.value);\n          const matches = compareValues(fieldValue, conditionValue, condition.operator);\n          \n          if (idx === 0) {\n            helpers.log(`Condition ${idx + 1}: ${condition.field} ${condition.operator} ${JSON.stringify(conditionValue)}`);\n          }\n          \n          return matches;\n        });\n      });\n      \n      helpers.log(`Filtered ${inputArray.length} items down to ${result.length} items`);\n      \n      return {\n        success: true,\n        operation: 'filter',\n        result,\n        originalCount: inputArray.length,\n        filteredCount: result.length,\n        conditions: filterConditions\n      };\n    }\n    \n    case 'find': {\n      if (!Array.isArray(filterConditions) || filterConditions.length === 0) {\n        helpers.warn('No filter conditions defined, returning first item');\n        return {\n          success: true,\n          operation: 'find',\n          result: inputArray[0] || null,\n          found: inputArray.length > 0,\n          conditions: []\n        };\n      }\n      \n      helpers.log(`Finding first item matching ${filterConditions.length} condition(s)`);\n      \n      result = inputArray.find(item => {\n        return filterConditions.every(condition => {\n          const fieldValue = getNestedValue(item, condition.field);\n          const conditionValue = resolveValue(condition.value);\n          return compareValues(fieldValue, conditionValue, condition.operator);\n        });\n      });\n      \n      if (result) {\n        helpers.log('Found matching item');\n      } else {\n        helpers.log('No matching item found');\n      }\n      \n      return {\n        success: true,\n        operation: 'find',\n        result: result || null,\n        found: !!result,\n        conditions: filterConditions\n      };\n    }\n    \n    case 'sort': {\n      if (!Array.isArray(sortFields) || sortFields.length === 0) {\n        helpers.warn('No sort fields defined, returning items in original order');\n        return {\n          success: true,\n          operation: 'sort',\n          result: inputArray,\n          count: inputArray.length,\n          sortFields: []\n        };\n      }\n      \n      helpers.log(`Sorting by ${sortFields.length} field(s)`);\n      sortFields.forEach((sf, idx) => {\n        helpers.log(`Sort ${idx + 1}: ${sf.field} (${sf.direction})`);\n      });\n      \n      result = [...inputArray].sort((a, b) => {\n        // Multi-field sorting: iterate through sort fields until we find a difference\n        for (const sortField of sortFields) {\n          const aVal = getNestedValue(a, sortField.field);\n          const bVal = getNestedValue(b, sortField.field);\n          \n          // Handle null/undefined\n          if (aVal === null || aVal === undefined) {\n            if (bVal === null || bVal === undefined) continue;\n            return 1;\n          }\n          if (bVal === null || bVal === undefined) return -1;\n          \n          // Compare\n          let comparison = 0;\n          if (aVal > bVal) comparison = 1;\n          if (aVal < bVal) comparison = -1;\n          \n          if (comparison !== 0) {\n            return sortField.direction === 'desc' ? -comparison : comparison;\n          }\n        }\n        return 0;\n      });\n      \n      helpers.log(`Sorted ${result.length} items`);\n      \n      return {\n        success: true,\n        operation: 'sort',\n        result,\n        count: result.length,\n        sortFields\n      };\n    }\n    \n    case 'unique': {\n      if (uniqueField) {\n        helpers.log(`Removing duplicates by field: ${uniqueField}`);\n        const seen = new Set();\n        result = inputArray.filter(item => {\n          const value = getNestedValue(item, uniqueField);\n          const key = JSON.stringify(value);\n          if (seen.has(key)) return false;\n          seen.add(key);\n          return true;\n        });\n      } else {\n        helpers.log('Removing duplicates by full object comparison');\n        const seen = new Set();\n        result = inputArray.filter(item => {\n          const key = JSON.stringify(item);\n          if (seen.has(key)) return false;\n          seen.add(key);\n          return true;\n        });\n      }\n      \n      helpers.log(`Removed ${inputArray.length - result.length} duplicates (${result.length} unique items remaining)`);\n      \n      return {\n        success: true,\n        operation: 'unique',\n        result,\n        originalCount: inputArray.length,\n        uniqueCount: result.length,\n        duplicatesRemoved: inputArray.length - result.length,\n        uniqueField\n      };\n    }\n    \n    case 'limit': {\n      helpers.log(`Limiting results: offset=${limitOffset}, count=${limitCount}`);\n      result = inputArray.slice(limitOffset, limitOffset + limitCount);\n      helpers.log(`Returned ${result.length} items from ${inputArray.length} total`);\n      \n      return {\n        success: true,\n        operation: 'limit',\n        result,\n        originalCount: inputArray.length,\n        returnedCount: result.length,\n        limit: limitCount,\n        offset: limitOffset\n      };\n    }\n    \n    default:\n      helpers.error(`Unknown operation: ${operation}`);\n      return { error: `Unknown operation: ${operation}` };\n  }\n} catch (error) {\n  helpers.error('Filter/Sort operation failed:', error.message);\n  return {\n    error: error.message,\n    operation\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

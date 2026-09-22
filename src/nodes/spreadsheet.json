@@ -1,0 +1,87 @@
+{
+  "id": "spreadsheet_node",
+  "version": "1.0",
+  "name": "Spreadsheet",
+  "description": "Read or write data in CSV or Excel format.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#22C55E",
+  "icon": "FileSpreadsheet",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "mode",
+      "displayName": "Mode",
+      "type": "options",
+      "default": "read",
+      "options": [
+        {
+          "value": "read",
+          "label": "Read File"
+        },
+        {
+          "value": "write",
+          "label": "Write File"
+        }
+      ]
+    },
+    {
+      "name": "filePath",
+      "displayName": "File Path",
+      "type": "string",
+      "default": "/data/file.csv"
+    },
+    {
+      "name": "format",
+      "displayName": "Format",
+      "type": "options",
+      "default": "csv",
+      "options": [
+        {
+          "value": "csv",
+          "label": "CSV"
+        },
+        {
+          "value": "xlsx",
+          "label": "Excel (.xlsx)"
+        }
+      ]
+    },
+    {
+      "name": "sheetName",
+      "displayName": "Sheet Name (Excel)",
+      "type": "string",
+      "default": "Sheet1",
+      "displayOptions": {
+        "show": {
+          "format": [
+            "xlsx"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "const fs = require('fs');\nconst { mode, filePath, format } = Object.fromEntries(Object.entries(node.properties).map(([k,v]) => [k,v.value]));\n\nif (mode === 'read') {\n  const content = fs.readFileSync(filePath, 'utf8');\n  if (format === 'csv') {\n    const [header, ...rows] = content.split('\\n').map(r => r.split(','));\n    const dataRows = rows.map(r => Object.fromEntries(header.map((h,i) => [h, r[i]])));\n    return { rows: dataRows };\n  }\n  return { content };\n} else {\n  if (!data.rows) throw new Error('No data to write');\n  const header = Object.keys(data.rows[0]);\n  const csv = [header.join(','), ...data.rows.map(r => header.map(h => r[h]).join(','))].join('\\n');\n  fs.writeFileSync(filePath, csv);\n  return { success: true, path: filePath };\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

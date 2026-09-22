@@ -1,0 +1,58 @@
+{
+  "id": "memory_sqlite",
+  "version": "1.0",
+  "name": "SQLite Memory",
+  "description": "Persistent conversation memory stored in SQLite database. Automatically loads and saves chat history.",
+  "group": "AI Memory",
+  "category": "ai",
+  "shape": "3x2",
+  "color": "#8B5CF6",
+  "icon": "Database",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Memory",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "memoryWindow",
+      "displayName": "History Window",
+      "type": "number",
+      "default": 10,
+      "description": "Number of message pairs to load (user + assistant)"
+    },
+    {
+      "name": "autoSave",
+      "displayName": "Auto Save",
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically save new messages to database"
+    },
+    {
+      "name": "notice",
+      "displayName": "Info",
+      "type": "notice",
+      "default": "This node loads conversation history from SQLite. Requires chatId and sessionId from input data."
+    }
+  ],
+  "executionCode": "const chatId = data?.chatId || data?.chat?.id;\nconst sessionId = data?.sessionId || 'default';\nconst memoryWindow = parseInt(node.properties.memoryWindow?.value || 10);\n\nhelpers.log(`[SQLite Memory] Loading history for chat: ${chatId}, session: ${sessionId}`);\n\nif (!chatId) {\n  helpers.warn('No chatId provided - returning empty memory');\n  return { messages: [], chatId: null, sessionId };\n}\n\nlet messages = [];\n\nif (typeof modules?.chatMessages !== 'undefined') {\n  try {\n    const chatMessages = modules.chatMessages;\n    const storedMessages = await chatMessages.getBySession(chatId, sessionId, memoryWindow * 2);\n    \n    helpers.log(`Found ${storedMessages.length} stored messages`);\n    \n    const recentMessages = storedMessages.slice(-memoryWindow * 2);\n    \n    messages = recentMessages\n      .filter(msg => msg.role === 'user' || msg.role === 'assistant')\n      .map(msg => ({\n        role: msg.role,\n        content: msg.content,\n        timestamp: msg.timestamp\n      }));\n    \n    helpers.log(`Loaded ${messages.length} messages from SQLite`);\n  } catch (e) {\n    helpers.error(`SQLite memory load failed: ${e.message}`);\n  }\n} else {\n  helpers.warn('SQLite modules not available');\n}\n\nreturn {\n  messages,\n  chatId,\n  sessionId,\n  memoryWindow,\n  autoSave: node.properties.autoSave?.value !== false\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

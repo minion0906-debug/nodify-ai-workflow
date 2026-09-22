@@ -1,0 +1,191 @@
+{
+  "id": "google_sheets_node",
+  "version": "1.0",
+  "name": "Google Sheets",
+  "description": "Read, write, append, update, and clear data in Google Sheets using API credentials.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#34A853",
+  "icon": "Table2",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "apiKey",
+      "options": [
+        { "value": "apiKey", "label": "API Key" },
+        { "value": "oauth2", "label": "OAuth2 (Access Token)" }
+      ]
+    },
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "read",
+      "required": true,
+      "options": [
+        {
+          "id": "op-read",
+          "label": "Read Rows",
+          "value": "read"
+        },
+        {
+          "id": "op-append",
+          "label": "Append Row",
+          "value": "append"
+        },
+        {
+          "id": "op-update",
+          "label": "Update Row",
+          "value": "update"
+        },
+        {
+          "id": "op-clear",
+          "label": "Clear Range",
+          "value": "clear"
+        },
+        {
+          "id": "op-create",
+          "label": "Create Sheet",
+          "value": "create"
+        }
+      ]
+    },
+    {
+      "name": "spreadsheetId",
+      "displayName": "Spreadsheet ID",
+      "type": "string",
+      "required": true,
+      "placeholder": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+      "description": "The ID from the Google Sheets URL"
+    },
+    {
+      "name": "sheetName",
+      "displayName": "Sheet Name",
+      "type": "string",
+      "default": "Sheet1",
+      "required": true,
+      "description": "Name of the sheet/tab to work with"
+    },
+    {
+      "name": "range",
+      "displayName": "Range",
+      "type": "string",
+      "default": "A:Z",
+      "placeholder": "A1:D10, A:Z, Sheet1!A1:B2",
+      "description": "Cell range in A1 notation",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "read",
+            "update",
+            "clear"
+          ]
+        }
+      }
+    },
+    {
+      "name": "data",
+      "displayName": "Data",
+      "type": "json",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "description": "Data to write (array or object)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "append",
+            "update"
+          ]
+        }
+      }
+    },
+    {
+      "name": "credentials",
+      "displayName": "OAuth2 Credentials",
+      "type": "credentials",
+      "placeholder": "Select OAuth2 credentials...",
+      "typeOptions": { "credentialType": "oauth2" },
+      "displayOptions": { "show": { "authentication": ["oauth2"] } }
+    },
+    {
+      "name": "rowNumber",
+      "displayName": "Row Number",
+      "type": "number",
+      "default": 1,
+      "description": "Row number to update (1-based)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "update"
+          ]
+        }
+      }
+    },
+    {
+      "name": "includeHeaders",
+      "displayName": "First Row is Headers",
+      "type": "boolean",
+      "default": true,
+      "description": "Treat first row as column headers",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "read"
+          ]
+        }
+      }
+    },
+    {
+      "name": "apiKey",
+      "displayName": "API Key",
+      "type": "string",
+      "required": true,
+      "description": "Google Sheets API Key (from Google Cloud Console)",
+      "displayOptions": { "show": { "authentication": ["apiKey"] } }
+    },
+    {
+      "name": "newSpreadsheetTitle",
+      "displayName": "New Spreadsheet Title",
+      "type": "string",
+      "default": "New Spreadsheet",
+      "description": "Title used when creating a new spreadsheet",
+      "displayOptions": { "show": { "operation": ["create"] } }
+    }
+  ],
+  "executionCode": "const operation = node.properties.operation.value;\nconst spreadsheetId = node.properties.spreadsheetId.value;\nconst sheetName = node.properties.sheetName.value || 'Sheet1';\nconst range = node.properties.range?.value || 'A:Z';\nlet dataToWrite = node.properties.data?.value;\nconst rowNumber = node.properties.rowNumber?.value || 1;\nconst includeHeaders = node.properties.includeHeaders?.value !== false;\nconst auth = node.properties.authentication?.value || 'apiKey';\nconst apiKey = node.properties.apiKey?.value;\nconst credentialId = node.properties.credentials?.value;\nconst newSpreadsheetTitle = node.properties.newSpreadsheetTitle?.value || 'New Spreadsheet';\n\n// Resolve template variables\nif (typeof dataToWrite === 'string') {\n  if (dataToWrite === '{{data}}') { dataToWrite = data; } else { try { dataToWrite = JSON.parse(dataToWrite); } catch (e) {} }\n}\n\nconst fullRange = `${sheetName}!${range}`;\nconst baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;\n\nasync function getAccessToken() {\n  let token = null;\n  if (auth === 'oauth2' && credentialId) {\n    if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); token = cred?.accessToken || null; }\n    if (!token && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); token = d?.data?.accessToken || null; } }\n    if (!token && env?.GOOGLE_ACCESS_TOKEN) token = env.GOOGLE_ACCESS_TOKEN;\n  }\n  return token;\n}\n\nfunction withKey(url) { return apiKey ? `${url}${url.includes('?') ? '&' : '?'}key=${apiKey}` : url; }\nfunction headersJson(extra = {}) { return { 'Content-Type': 'application/json', ...extra }; }\n\nhelpers.log(`Google Sheets operation: ${operation} on ${fullRange} (auth: ${auth})`);\n\ntry {\n  switch (operation) {\n    case 'read': {\n      if (auth === 'apiKey') {\n        const url = withKey(`${baseUrl}/values/${encodeURIComponent(fullRange)}`);\n        const response = await fetch(url);\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to read from Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        const rows = result.values || [];\n        if (includeHeaders && rows.length > 0) {\n          const headers = rows[0];\n          const dataRows = rows.slice(1).map(row => { const obj = {}; headers.forEach((header, index) => { obj[header] = row[index] || ''; }); return obj; });\n          return { success: true, operation: 'read', result: dataRows, count: dataRows.length, headers, range: fullRange };\n        } else {\n          return { success: true, operation: 'read', result: rows, count: rows.length, range: fullRange };\n        }\n      } else {\n        const token = await getAccessToken(); if (!token) return { path: 'error', error: 'Missing OAuth2 access token' };\n        const url = `${baseUrl}/values/${encodeURIComponent(fullRange)}`;\n        const response = await fetch(url, { headers: headersJson({ 'Authorization': `Bearer ${token}` }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to read from Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        const rows = result.values || [];\n        if (includeHeaders && rows.length > 0) {\n          const headers = rows[0];\n          const dataRows = rows.slice(1).map(row => { const obj = {}; headers.forEach((header, index) => { obj[header] = row[index] || ''; }); return obj; });\n          return { success: true, operation: 'read', result: dataRows, count: dataRows.length, headers, range: fullRange };\n        } else {\n          return { success: true, operation: 'read', result: rows, count: rows.length, range: fullRange };\n        }\n      }\n    }\n    case 'append': {\n      let rows = [];\n      if (Array.isArray(dataToWrite)) { if (dataToWrite.length > 0 && typeof dataToWrite[0] === 'object') { const keys = Object.keys(dataToWrite[0]); rows = dataToWrite.map(obj => keys.map(key => obj[key] || '')); } else { rows = [dataToWrite]; } }\n      else if (typeof dataToWrite === 'object') { rows = [Object.values(dataToWrite)]; } else { return { path: 'error', error: 'Data must be an array or object' }; }\n      if (auth === 'apiKey') {\n        const url = withKey(`${baseUrl}/values/${encodeURIComponent(fullRange)}:append?valueInputOption=USER_ENTERED`);\n        const response = await fetch(url, { method: 'POST', headers: headersJson(), body: JSON.stringify({ values: rows }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to append to Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'append', updatedRange: result.updates?.updatedRange, updatedRows: result.updates?.updatedRows, updatedColumns: result.updates?.updatedColumns, updatedCells: result.updates?.updatedCells };\n      } else {\n        const token = await getAccessToken(); if (!token) return { path: 'error', error: 'Missing OAuth2 access token' };\n        const url = `${baseUrl}/values/${encodeURIComponent(fullRange)}:append?valueInputOption=USER_ENTERED`;\n        const response = await fetch(url, { method: 'POST', headers: headersJson({ 'Authorization': `Bearer ${token}` }), body: JSON.stringify({ values: rows }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to append to Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'append', updatedRange: result.updates?.updatedRange, updatedRows: result.updates?.updatedRows, updatedColumns: result.updates?.updatedColumns, updatedCells: result.updates?.updatedCells };\n      }\n    }\n    case 'update': {\n      let rows = [];\n      if (Array.isArray(dataToWrite)) { rows = [dataToWrite]; }\n      else if (typeof dataToWrite === 'object') { rows = [Object.values(dataToWrite)]; }\n      else { return { path: 'error', error: 'Data must be an array or object' }; }\n      const updateRange = `${sheetName}!A${rowNumber}:Z${rowNumber}`;\n      if (auth === 'apiKey') {\n        const url = withKey(`${baseUrl}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`);\n        const response = await fetch(url, { method: 'PUT', headers: headersJson(), body: JSON.stringify({ values: rows }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to update Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'update', updatedRange: result.updatedRange, updatedRows: result.updatedRows, updatedColumns: result.updatedColumns, updatedCells: result.updatedCells };\n      } else {\n        const token = await getAccessToken(); if (!token) return { path: 'error', error: 'Missing OAuth2 access token' };\n        const url = `${baseUrl}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`;\n        const response = await fetch(url, { method: 'PUT', headers: headersJson({ 'Authorization': `Bearer ${token}` }), body: JSON.stringify({ values: rows }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to update Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'update', updatedRange: result.updatedRange, updatedRows: result.updatedRows, updatedColumns: result.updatedColumns, updatedCells: result.updatedCells };\n      }\n    }\n    case 'clear': {\n      if (auth === 'apiKey') {\n        const url = withKey(`${baseUrl}/values/${encodeURIComponent(fullRange)}:clear`);\n        const response = await fetch(url, { method: 'POST', headers: headersJson() });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to clear Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'clear', clearedRange: result.clearedRange };\n      } else {\n        const token = await getAccessToken(); if (!token) return { path: 'error', error: 'Missing OAuth2 access token' };\n        const url = `${baseUrl}/values/${encodeURIComponent(fullRange)}:clear`;\n        const response = await fetch(url, { method: 'POST', headers: headersJson({ 'Authorization': `Bearer ${token}` }) });\n        if (!response.ok) { const error = await response.json(); return { path: 'error', error: error.error?.message || 'Failed to clear Google Sheets', statusCode: response.status }; }\n        const result = await response.json();\n        return { success: true, operation: 'clear', clearedRange: result.clearedRange };\n      }\n    }\n    case 'create': {\n      if (auth !== 'oauth2') { return { path: 'error', error: 'Create requires OAuth2 authentication' }; }\n      const token = await getAccessToken(); if (!token) return { path: 'error', error: 'Missing OAuth2 access token' };\n      const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', { method: 'POST', headers: headersJson({ 'Authorization': `Bearer ${token}` }), body: JSON.stringify({ properties: { title: newSpreadsheetTitle }, sheets: [{ properties: { title: sheetName } }] }) });\n      const result = await response.json();\n      if (!response.ok) { return { path: 'error', error: result.error?.message || 'Failed to create spreadsheet', statusCode: response.status, details: result }; }\n      return { success: true, spreadsheetId: result.spreadsheetId, url: result.spreadsheetUrl, title: result.properties?.title, raw: result };\n    }\n    default: return { path: 'error', error: `Unknown operation: ${operation}` };\n  }\n} catch (error) {\n  helpers.error('Google Sheets operation failed:', error);\n  return { path: 'error', error: error.message, details: error.stack };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

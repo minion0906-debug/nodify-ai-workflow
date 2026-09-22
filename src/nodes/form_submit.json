@@ -1,0 +1,160 @@
+{
+  "id": "form_submit_trigger",
+  "version": "1.0",
+  "name": "Form Submit",
+  "description": "Trigger workflow when a form is submitted. Generates a unique form URL and captures form data.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "FileCheck",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "formId",
+      "displayName": "Form ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Unique identifier for this form (auto-generated)",
+      "ui": {
+        "component": "code",
+        "readOnly": true
+      }
+    },
+    {
+      "name": "webhviewSubmissionsookUrl",
+      "displayName": "View Form",
+      "type": "inputButton",
+      "behavior": {
+        "action": "copyToClipboard",
+        "value": "{{window.location.origin}}/api/form/prod/{{node.config.formId}}"
+      }
+    },
+    {
+      "name": "formName",
+      "displayName": "Form Name",
+      "type": "string",
+      "default": "My Form",
+      "required": true,
+      "placeholder": "Contact Form, Survey, Registration",
+      "description": "Friendly name for this form"
+    },
+    {
+      "name": "formFields",
+      "displayName": "Expected Fields",
+      "type": "json",
+      "ui": {
+        "component": "form-builder"
+      },
+      "default": "[\n  {\n    \"name\": \"email\",\n    \"label\": \"Email\",\n    \"type\": \"email\",\n    \"required\": true\n  },\n  {\n    \"name\": \"message\",\n    \"label\": \"Message\",\n    \"type\": \"textarea\",\n    \"required\": false\n  }\n]",
+      "description": "Array of expected form fields with validation"
+    },
+    {
+      "name": "validationMode",
+      "displayName": "Validation Mode",
+      "type": "options",
+      "default": "loose",
+      "options": [
+        {
+          "id": "val-loose",
+          "label": "Loose (accept any fields)",
+          "value": "loose"
+        },
+        {
+          "id": "val-strict",
+          "label": "Strict (only defined fields)",
+          "value": "strict"
+        }
+      ]
+    },
+    {
+      "name": "requireAuth",
+      "displayName": "Require Authentication",
+      "type": "boolean",
+      "default": false,
+      "description": "Require user to be logged in to submit"
+    },
+    {
+      "name": "reCaptcha",
+      "displayName": "Enable reCAPTCHA",
+      "type": "boolean",
+      "default": false,
+      "description": "Require reCAPTCHA validation"
+    },
+    {
+      "name": "reCaptchaKey",
+      "displayName": "reCAPTCHA Site Key",
+      "type": "string",
+      "description": "Google reCAPTCHA v3 site key",
+      "displayOptions": {
+        "show": {
+          "reCaptcha": [
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "successMessage",
+      "displayName": "Success Message",
+      "type": "string",
+      "default": "Thank you! Your form has been submitted successfully.",
+      "description": "Message shown after successful submission"
+    },
+    {
+      "name": "redirectUrl",
+      "displayName": "Redirect URL",
+      "type": "string",
+      "placeholder": "https://example.com/thank-you",
+      "description": "URL to redirect after submission (optional)"
+    },
+    {
+      "name": "allowCORS",
+      "displayName": "Allow CORS",
+      "type": "boolean",
+      "default": true,
+      "description": "Allow cross-origin requests"
+    },
+    {
+      "name": "rateLimitPerMinute",
+      "displayName": "Rate Limit (per minute)",
+      "type": "number",
+      "default": 10,
+      "description": "Maximum submissions per IP per minute"
+    },
+    {
+      "name": "fileUploadLocation",
+      "displayName": "File Upload Location",
+      "type": "options",
+      "default": "local",
+      "options": [
+        {
+          "id": "upload-local",
+          "label": "Local (12h expiration)",
+          "value": "local"
+        },
+        {
+          "id": "upload-cloud",
+          "label": "Cloud (24h expiration)",
+          "value": "cloud"
+        }
+      ],
+      "description": "Where to store uploaded files"
+    }
+  ],
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Form submission trigger with validation, reCAPTCHA support, and rate limiting"
+  }
+}

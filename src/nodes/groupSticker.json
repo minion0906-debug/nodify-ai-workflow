@@ -1,0 +1,107 @@
+{
+  "id": "groupSticker",
+  "name": "Group",
+  "description": "A background sticker to group nodes and display text.",
+  "version": "1.0",
+  "group": "Layout",
+  "category": "layout",
+  "shape": "2x2",
+  "color": "#8B83E2",
+  "icon": "BoxSelect",
+  "inputs": [],
+  "outputs": [],
+  "properties": [
+    {
+      "name": "note",
+      "displayName": "Note Content",
+      "type": "string",
+      "default": "### Group Title",
+      "description": "The text content of the sticker (supports Markdown).",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "backgroundColor",
+      "displayName": "Background Color",
+      "type": "string",
+      "default": "rgba(139, 131, 226, 0.1)",
+      "ui": {
+        "component": "color"
+      }
+    },
+    {
+      "name": "borderColor",
+      "displayName": "Border Color",
+      "type": "string",
+      "default": "rgba(139, 131, 226, 0.5)",
+      "ui": {
+        "component": "color"
+      }
+    },
+    {
+      "name": "textColor",
+      "displayName": "Text Color",
+      "type": "string",
+      "default": "#ffffff",
+      "ui": {
+        "component": "color"
+      }
+    },
+    {
+      "name": "fontSize",
+      "displayName": "Font Size",
+      "type": "number",
+      "default": 18,
+      "ui": {
+        "component": "slider"
+      },
+      "validation": {
+        "min": 8,
+        "max": 72,
+        "step": 1
+      }
+    },
+    {
+      "name": "borderRadius",
+      "displayName": "Border Radius",
+      "type": "number",
+      "default": 16,
+      "ui": {
+        "component": "slider"
+      },
+      "validation": {
+        "min": 0,
+        "max": 64,
+        "step": 1
+      }
+    },
+    {
+      "name": "textAlign",
+      "displayName": "Text Align",
+      "type": "options",
+      "default": "center",
+      "options": [
+        {
+          "id": "align-left",
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "id": "align-center",
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "id": "align-right",
+          "value": "right",
+          "label": "Right"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

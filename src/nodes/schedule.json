@@ -1,0 +1,247 @@
+{
+  "id": "schedule_trigger",
+  "version": "1.0",
+  "name": "Schedule",
+  "description": "Trigger workflow on a schedule using cron expressions or simple intervals. Run workflows at specific times or repeatedly.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "2x2",
+  "color": "#8B5CF6",
+  "icon": "Clock",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "scheduleType",
+      "displayName": "Schedule Type",
+      "type": "options",
+      "default": "interval",
+      "required": true,
+      "options": [
+        {
+          "id": "type-interval",
+          "label": "Simple Interval",
+          "value": "interval"
+        },
+        {
+          "id": "type-cron",
+          "label": "Cron Expression",
+          "value": "cron"
+        },
+        {
+          "id": "type-specific",
+          "label": "Specific Date/Time",
+          "value": "specific"
+        }
+      ]
+    },
+    {
+      "name": "intervalValue",
+      "displayName": "Interval Value",
+      "type": "number",
+      "default": 5,
+      "description": "How often to run",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "interval"
+          ]
+        }
+      }
+    },
+    {
+      "name": "intervalUnit",
+      "displayName": "Interval Unit",
+      "type": "options",
+      "default": "minutes",
+      "options": [
+        {
+          "id": "unit-minutes",
+          "label": "Minutes",
+          "value": "minutes"
+        },
+        {
+          "id": "unit-hours",
+          "label": "Hours",
+          "value": "hours"
+        },
+        {
+          "id": "unit-days",
+          "label": "Days",
+          "value": "days"
+        },
+        {
+          "id": "unit-weeks",
+          "label": "Weeks",
+          "value": "weeks"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "interval"
+          ]
+        }
+      }
+    },
+    {
+      "name": "cronExpression",
+      "displayName": "Cron Expression",
+      "type": "string",
+      "placeholder": "0 9 * * 1-5",
+      "description": "Cron expression (minute hour day month weekday)",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "cron"
+          ]
+        }
+      }
+    },
+    {
+      "name": "cronPreset",
+      "displayName": "Cron Presets",
+      "type": "options",
+      "default": "custom",
+      "options": [
+        {
+          "id": "preset-custom",
+          "label": "Custom",
+          "value": "custom"
+        },
+        {
+          "id": "preset-hourly",
+          "label": "Every Hour (0 * * * *)",
+          "value": "0 * * * *"
+        },
+        {
+          "id": "preset-daily",
+          "label": "Daily at 9 AM (0 9 * * *)",
+          "value": "0 9 * * *"
+        },
+        {
+          "id": "preset-weekly",
+          "label": "Weekly on Monday (0 9 * * 1)",
+          "value": "0 9 * * 1"
+        },
+        {
+          "id": "preset-monthly",
+          "label": "Monthly on 1st (0 9 1 * *)",
+          "value": "0 9 1 * *"
+        },
+        {
+          "id": "preset-weekdays",
+          "label": "Weekdays at 9 AM (0 9 * * 1-5)",
+          "value": "0 9 * * 1-5"
+        },
+        {
+          "id": "preset-midnight",
+          "label": "Daily at Midnight (0 0 * * *)",
+          "value": "0 0 * * *"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "cron"
+          ]
+        }
+      }
+    },
+    {
+      "name": "specificDateTime",
+      "displayName": "Date and Time",
+      "type": "string",
+      "placeholder": "2025-12-31T23:59:59",
+      "description": "ISO 8601 date-time string",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "specific"
+          ]
+        }
+      }
+    },
+    {
+      "name": "timezone",
+      "displayName": "Timezone",
+      "type": "string",
+      "default": "UTC",
+      "placeholder": "America/New_York, Europe/London, Asia/Tokyo",
+      "description": "IANA timezone identifier"
+    },
+    {
+      "name": "startDate",
+      "displayName": "Start Date",
+      "type": "string",
+      "placeholder": "2025-01-01T00:00:00",
+      "description": "When to start the schedule (ISO 8601)",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "interval",
+            "cron"
+          ]
+        }
+      }
+    },
+    {
+      "name": "endDate",
+      "displayName": "End Date",
+      "type": "string",
+      "placeholder": "2025-12-31T23:59:59",
+      "description": "When to stop the schedule (ISO 8601)",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "interval",
+            "cron"
+          ]
+        }
+      }
+    },
+    {
+      "name": "maxRuns",
+      "displayName": "Max Executions",
+      "type": "number",
+      "placeholder": "100",
+      "description": "Stop after this many executions (optional)",
+      "displayOptions": {
+        "show": {
+          "scheduleType": [
+            "interval",
+            "cron"
+          ]
+        }
+      }
+    },
+    {
+      "name": "skipOnError",
+      "displayName": "Skip on Error",
+      "type": "boolean",
+      "default": false,
+      "description": "Continue schedule even if execution fails"
+    },
+    {
+      "name": "runOnStartup",
+      "displayName": "Run on Startup",
+      "type": "boolean",
+      "default": false,
+      "description": "Run immediately when workflow is activated"
+    }
+  ],
+  "executionCode": "// Schedule Trigger\nconst scheduleType = node.properties.scheduleType.value;\nconst intervalValue = node.properties.intervalValue?.value || 5;\nconst intervalUnit = node.properties.intervalUnit?.value || 'minutes';\nlet cronExpression = node.properties.cronExpression?.value;\nconst cronPreset = node.properties.cronPreset?.value;\nconst specificDateTime = node.properties.specificDateTime?.value;\nconst timezone = node.properties.timezone?.value || 'UTC';\nconst startDate = node.properties.startDate?.value;\nconst endDate = node.properties.endDate?.value;\nconst maxRuns = node.properties.maxRuns?.value;\nconst skipOnError = node.properties.skipOnError?.value === true;\nconst runOnStartup = node.properties.runOnStartup?.value === true;\n\n// If preset is selected, use it\nif (scheduleType === 'cron' && cronPreset && cronPreset !== 'custom') {\n  cronExpression = cronPreset;\n}\n\nhelpers.log('Starting Schedule Trigger node');\nhelpers.log(`Schedule type: ${scheduleType}`);\nhelpers.log(`Timezone: ${timezone}`);\n\n// Helper to parse cron expression\nconst parseCron = (expr) => {\n  const parts = expr.split(' ');\n  if (parts.length < 5) {\n    return { error: 'Invalid cron expression' };\n  }\n  \n  return {\n    minute: parts[0],\n    hour: parts[1],\n    dayOfMonth: parts[2],\n    month: parts[3],\n    dayOfWeek: parts[4],\n    readable: cronToReadable(expr)\n  };\n};\n\n// Helper to convert cron to readable text\nconst cronToReadable = (expr) => {\n  const presets = {\n    '0 * * * *': 'Every hour',\n    '0 9 * * *': 'Daily at 9:00 AM',\n    '0 9 * * 1': 'Every Monday at 9:00 AM',\n    '0 9 1 * *': 'First day of every month at 9:00 AM',\n    '0 9 * * 1-5': 'Every weekday at 9:00 AM',\n    '0 0 * * *': 'Daily at midnight'\n  };\n  return presets[expr] || expr;\n};\n\n// Helper to calculate interval in milliseconds\nconst getIntervalMs = (value, unit) => {\n  const multipliers = {\n    minutes: 60 * 1000,\n    hours: 60 * 60 * 1000,\n    days: 24 * 60 * 60 * 1000,\n    weeks: 7 * 24 * 60 * 60 * 1000\n  };\n  return value * (multipliers[unit] || 60000);\n};\n\n// Calculate next execution time\nconst getNextExecution = () => {\n  const now = new Date();\n  \n  if (scheduleType === 'specific') {\n    return new Date(specificDateTime);\n  }\n  \n  if (scheduleType === 'interval') {\n    const ms = getIntervalMs(intervalValue, intervalUnit);\n    return new Date(now.getTime() + ms);\n  }\n  \n  // For cron, we would use a library like node-cron or cron-parser\n  // This is a simplified simulation\n  return new Date(now.getTime() + 60000); // 1 minute from now\n};\n\ntry {\n  let scheduleInfo;\n  \n  switch (scheduleType) {\n    case 'interval': {\n      helpers.log(`Setting up interval schedule: ${intervalValue} ${intervalUnit}`);\n      const intervalMs = getIntervalMs(intervalValue, intervalUnit);\n      scheduleInfo = {\n        type: 'interval',\n        interval: `${intervalValue} ${intervalUnit}`,\n        intervalMs,\n        readable: `Every ${intervalValue} ${intervalUnit}`\n      };\n      helpers.log(`Interval: ${scheduleInfo.readable} (${intervalMs}ms)`);\n      break;\n    }\n    \n    case 'cron': {\n      if (!cronExpression) {\n        helpers.error('Cron expression is required');\n        return {\n          error: 'Cron expression is required'\n        };\n      }\n      \n      helpers.log(`Setting up cron schedule: ${cronExpression}`);\n      const cronInfo = parseCron(cronExpression);\n      scheduleInfo = {\n        type: 'cron',\n        expression: cronExpression,\n        parsed: cronInfo,\n        readable: cronInfo.readable\n      };\n      helpers.log(`Cron readable: ${scheduleInfo.readable}`);\n      break;\n    }\n    \n    case 'specific': {\n      if (!specificDateTime) {\n        helpers.error('Date and time is required');\n        return {\n          error: 'Date and time is required'\n        };\n      }\n      \n      helpers.log(`Setting up one-time schedule for: ${specificDateTime}`);\n      scheduleInfo = {\n        type: 'specific',\n        dateTime: specificDateTime,\n        readable: `Once at ${specificDateTime}`\n      };\n      break;\n    }\n    \n    default:\n      helpers.error(`Unknown schedule type: ${scheduleType}`);\n      return { error: `Unknown schedule type: ${scheduleType}` };\n  }\n  \n  const nextExecution = getNextExecution();\n  helpers.log(`Next execution: ${nextExecution.toISOString()}`);\n  \n  return {\n    triggerType: 'schedule',\n    schedule: scheduleInfo,\n    timezone,\n    nextExecution: nextExecution.toISOString(),\n    configuration: {\n      startDate,\n      endDate,\n      maxRuns,\n      skipOnError,\n      runOnStartup\n    },\n    instructions: [\n      `Schedule: ${scheduleInfo.readable}`,\n      `Timezone: ${timezone}`,\n      `Next execution: ${nextExecution.toISOString()}`,\n      startDate ? `Starts: ${startDate}` : null,\n      endDate ? `Ends: ${endDate}` : null,\n      maxRuns ? `Max runs: ${maxRuns}` : null\n    ].filter(Boolean),\n    note: 'In production, this schedule will be registered with a cron service (e.g., node-cron)',\n    testData: {\n      triggeredAt: new Date().toISOString(),\n      executionCount: 1,\n      scheduledTime: nextExecution.toISOString(),\n      actualTime: new Date().toISOString(),\n      timeDifference: 0\n    }\n  };\n} catch (error) {\n  helpers.error('Schedule trigger error:', error);\n  return {\n    error: error.message,\n    details: error.stack\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Schedule trigger with cron support. Install node-cron for production: npm install node-cron"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://nodify.dev/schema/context.json",
+  "_meta": {
+    "type": "object",
+    "description": "Root semantic schema for the execution environment."
+  },
+  "definitions": {},
+  "context": {
+    "_meta": {
+      "type": "object",
+      "description": "The global context object available during execution."
+    },
+    "properties": {
+      "node": {
+        "_meta": {
+          "type": "object",
+          "description": "The current node's definition and properties."
+        },
+        "properties": {
+          "name": {
+            "_meta": {
+              "type": "string",
+              "description": "The display name of the node."
+            }
+          },
+          "description": {
+            "_meta": {
+              "type": "string",
+              "description": "The description of the node."
+            }
+          },
+          "group": {
+            "_meta": {
+              "type": "string",
+              "description": "The group the node belongs to."
+            }
+          },
+          "appearance": {
+            "_meta": {
+              "type": "object",
+              "description": "Visual properties of the node."
+            },
+            "properties": {
+              "color": {
+                "_meta": {
+                  "type": "string",
+                  "format": "color",
+                  "description": "The primary color of the node."
+                }
+              },
+              "shape": {
+                "_meta": {
+                  "type": "string",
+                  "description": "The shape of the node ('rectangle', 'circle', etc.)."
+                }
+              },
+              "icon": {
+                "_meta": {
+                  "type": "string",
+                  "description": "The identifier for the node's icon."
+                }
+              }
+            }
+          },
+          "ports": {
+            "_meta": {
+              "type": "object",
+              "description": "The input and output ports of the node."
+            },
+            "properties": {
+              "inputs": {
+                "_meta": {
+                  "type": "object",
+                  "description": "Map of the node's input ports."
+                }
+              },
+              "outputs": {
+                "_meta": {
+                  "type": "object",
+                  "description": "Map of the node's output ports."
+                }
+              }
+            }
+          },
+          "properties": {
+            "_meta": {
+              "type": "object",
+              "description": "A map of the node's configured properties, defined by the user."
+            },
+            "properties": {}
+        }
+      },
+      "data": {
+        "_meta": {
+          "type": "object",
+          "description": "The data payload flowing into the node."
+        }
+      },
+      "env": {
+        "_meta": {
+          "type": "object",
+          "description": "Environment variables."
+        }
+      }
+    }
+  }
+}
+}

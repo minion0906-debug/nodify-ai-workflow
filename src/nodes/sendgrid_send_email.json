@@ -1,0 +1,24 @@
+{
+  "id": "sendgrid_send_email",
+  "version": "1.0",
+  "name": "SendGrid Send Email",
+  "description": "Send an email using SendGrid API.",
+  "group": "Actions",
+  "category": "action",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#2BB673",
+  "icon": "Mail",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [ { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }, { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 } ],
+  "properties": [
+    { "name": "credentials", "displayName": "SendGrid Credentials", "type": "credentials", "typeOptions": { "credentialType": "sendgrid" }, "required": true },
+    { "name": "from", "displayName": "From", "type": "string", "required": true, "placeholder": "no-reply@example.com" },
+    { "name": "to", "displayName": "To", "type": "string", "required": true, "default": "{{data.email}}" },
+    { "name": "subject", "displayName": "Subject", "type": "string", "default": "Hello {{data.name}}" },
+    { "name": "html", "displayName": "HTML Body", "type": "string", "ui": { "component": "textarea" }, "default": "<p>Hello {{data.name}}</p>" }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const from = node.properties.from?.value;\n  const to = node.properties.to?.value;\n  const subject = node.properties.subject?.value || '';\n  const html = node.properties.html?.value || '';\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!from || !to) return { path: 'error', error: 'from and to are required' };\n\n  let apiKey = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); apiKey = cred?.apiKey || null; }\n  if (!apiKey && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); apiKey = d?.data?.apiKey || null; } }\n  if (!apiKey && env?.SENDGRID_API_KEY) apiKey = env.SENDGRID_API_KEY;\n  if (!apiKey) return { path: 'error', error: 'No SendGrid API key provided' };\n\n  const res = await fetch('https://api.sendgrid.com/v3/mail/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ personalizations: [ { to: [ { email: to } ] } ], from: { email: from }, subject, content: [ { type: 'text/html', value: html } ] }) });\n  if (res.status !== 202) { const err = await res.text(); return { path: 'error', error: 'SendGrid send failed', status: res.status, details: err }; }\n  return { success: true, accepted: true };\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

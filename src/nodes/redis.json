@@ -1,0 +1,263 @@
+{
+  "id": "redis_node",
+  "version": "1.0",
+  "name": "Redis",
+  "description": "Redis cache operations: get/set values, manage TTL, pub/sub, lists, sets, and hashes.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#DC382D",
+  "icon": "Database",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "get",
+      "required": true,
+      "options": [
+        {
+          "id": "op-get",
+          "label": "Get Value",
+          "value": "get"
+        },
+        {
+          "id": "op-set",
+          "label": "Set Value",
+          "value": "set"
+        },
+        {
+          "id": "op-delete",
+          "label": "Delete Key",
+          "value": "delete"
+        },
+        {
+          "id": "op-exists",
+          "label": "Check Key Exists",
+          "value": "exists"
+        },
+        {
+          "id": "op-expire",
+          "label": "Set TTL",
+          "value": "expire"
+        },
+        {
+          "id": "op-incr",
+          "label": "Increment",
+          "value": "incr"
+        },
+        {
+          "id": "op-lpush",
+          "label": "List Push (Left)",
+          "value": "lpush"
+        },
+        {
+          "id": "op-rpush",
+          "label": "List Push (Right)",
+          "value": "rpush"
+        },
+        {
+          "id": "op-lrange",
+          "label": "List Range",
+          "value": "lrange"
+        },
+        {
+          "id": "op-hset",
+          "label": "Hash Set Field",
+          "value": "hset"
+        },
+        {
+          "id": "op-hget",
+          "label": "Hash Get Field",
+          "value": "hget"
+        },
+        {
+          "id": "op-hgetall",
+          "label": "Hash Get All",
+          "value": "hgetall"
+        },
+        {
+          "id": "op-publish",
+          "label": "Publish Message",
+          "value": "publish"
+        }
+      ]
+    },
+    {
+      "name": "host",
+      "displayName": "Redis Host",
+      "type": "string",
+      "default": "localhost",
+      "required": true,
+      "description": "Redis server hostname or IP"
+    },
+    {
+      "name": "port",
+      "displayName": "Redis Port",
+      "type": "number",
+      "default": 6379,
+      "required": true,
+      "description": "Redis server port"
+    },
+    {
+      "name": "password",
+      "displayName": "Password",
+      "type": "string",
+      "description": "Redis password (if required)"
+    },
+    {
+      "name": "database",
+      "displayName": "Database Number",
+      "type": "number",
+      "default": 0,
+      "description": "Redis database number (0-15)"
+    },
+    {
+      "name": "key",
+      "displayName": "Key",
+      "type": "string",
+      "required": true,
+      "placeholder": "mykey, user:123, session:abc",
+      "description": "Redis key name"
+    },
+    {
+      "name": "value",
+      "displayName": "Value",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "description": "Value to store (will be JSON stringified if object)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "set",
+            "lpush",
+            "rpush"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ttl",
+      "displayName": "TTL (seconds)",
+      "type": "number",
+      "description": "Time to live in seconds (0 = no expiration)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "set",
+            "expire"
+          ]
+        }
+      }
+    },
+    {
+      "name": "field",
+      "displayName": "Hash Field",
+      "type": "string",
+      "placeholder": "email, name, age",
+      "description": "Field name in hash",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "hset",
+            "hget"
+          ]
+        }
+      }
+    },
+    {
+      "name": "start",
+      "displayName": "Start Index",
+      "type": "number",
+      "default": 0,
+      "description": "Start index for list range",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "lrange"
+          ]
+        }
+      }
+    },
+    {
+      "name": "stop",
+      "displayName": "Stop Index",
+      "type": "number",
+      "default": -1,
+      "description": "Stop index for list range (-1 = end)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "lrange"
+          ]
+        }
+      }
+    },
+    {
+      "name": "channel",
+      "displayName": "Channel",
+      "type": "string",
+      "placeholder": "notifications, events",
+      "description": "Pub/Sub channel name",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "publish"
+          ]
+        }
+      }
+    },
+    {
+      "name": "message",
+      "displayName": "Message",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "description": "Message to publish",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "publish"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "const operation = node.properties.operation.value;\nconst host = node.properties.host.value || 'localhost';\nconst port = node.properties.port.value || 6379;\nconst password = node.properties.password?.value;\nconst database = node.properties.database?.value || 0;\nconst key = node.properties.key.value;\nlet value = node.properties.value?.value;\nconst ttl = node.properties.ttl?.value;\nconst field = node.properties.field?.value;\nconst start = node.properties.start?.value || 0;\nconst stop = node.properties.stop?.value || -1;\nconst channel = node.properties.channel?.value;\nlet message = node.properties.message?.value;\n\n// Resolve template variables\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') return data;\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const path = match[1].split('.');\n        let result = data;\n        for (const part of path) {\n          result = result?.[part];\n        }\n        return result;\n      }\n    }\n  }\n  return val;\n};\n\nvalue = resolveValue(value);\nmessage = resolveValue(message);\n\nif (!key && operation !== 'publish') {\n  return {\n    path: 'error',\n    error: 'Redis key is required'\n  };\n}\n\nhelpers.log(`Redis operation: ${operation} on key: ${key}`);\n\n// Note: This is a template implementation\n// In production, install redis client: npm install redis\n// Example:\n// const redis = require('redis');\n// const client = redis.createClient({\n//   socket: { host, port },\n//   password,\n//   database\n// });\n// await client.connect();\n\ntry {\n  // Simulated Redis operations for demonstration\n  // Replace with actual redis client in production\n  \n  switch (operation) {\n    case 'get': {\n      helpers.log(`GET ${key}`);\n      return {\n        success: true,\n        operation: 'get',\n        key,\n        value: null,\n        message: 'Redis GET simulated. Install redis client for production use.',\n        note: 'Install: npm install redis'\n      };\n    }\n    \n    case 'set': {\n      // Convert objects to JSON string\n      let finalValue = value;\n      if (typeof value === 'object') {\n        finalValue = JSON.stringify(value);\n      }\n      \n      helpers.log(`SET ${key} = ${finalValue}`);\n      if (ttl) {\n        helpers.log(`EXPIRE ${key} ${ttl}`);\n      }\n      \n      return {\n        success: true,\n        operation: 'set',\n        key,\n        value: finalValue,\n        ttl: ttl || null,\n        message: 'Redis SET simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'delete': {\n      helpers.log(`DEL ${key}`);\n      return {\n        success: true,\n        operation: 'delete',\n        key,\n        deleted: true,\n        message: 'Redis DEL simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'exists': {\n      helpers.log(`EXISTS ${key}`);\n      return {\n        success: true,\n        operation: 'exists',\n        key,\n        exists: false,\n        message: 'Redis EXISTS simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'expire': {\n      if (!ttl) {\n        return {\n          path: 'error',\n          error: 'TTL is required for expire operation'\n        };\n      }\n      helpers.log(`EXPIRE ${key} ${ttl}`);\n      return {\n        success: true,\n        operation: 'expire',\n        key,\n        ttl,\n        message: 'Redis EXPIRE simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'incr': {\n      helpers.log(`INCR ${key}`);\n      return {\n        success: true,\n        operation: 'incr',\n        key,\n        value: 1,\n        message: 'Redis INCR simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'lpush': {\n      helpers.log(`LPUSH ${key} ${value}`);\n      return {\n        success: true,\n        operation: 'lpush',\n        key,\n        value,\n        length: 1,\n        message: 'Redis LPUSH simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'rpush': {\n      helpers.log(`RPUSH ${key} ${value}`);\n      return {\n        success: true,\n        operation: 'rpush',\n        key,\n        value,\n        length: 1,\n        message: 'Redis RPUSH simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'lrange': {\n      helpers.log(`LRANGE ${key} ${start} ${stop}`);\n      return {\n        success: true,\n        operation: 'lrange',\n        key,\n        start,\n        stop,\n        values: [],\n        message: 'Redis LRANGE simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'hset': {\n      if (!field) {\n        return {\n          path: 'error',\n          error: 'Hash field is required for hset operation'\n        };\n      }\n      helpers.log(`HSET ${key} ${field} ${value}`);\n      return {\n        success: true,\n        operation: 'hset',\n        key,\n        field,\n        value,\n        message: 'Redis HSET simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'hget': {\n      if (!field) {\n        return {\n          path: 'error',\n          error: 'Hash field is required for hget operation'\n        };\n      }\n      helpers.log(`HGET ${key} ${field}`);\n      return {\n        success: true,\n        operation: 'hget',\n        key,\n        field,\n        value: null,\n        message: 'Redis HGET simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'hgetall': {\n      helpers.log(`HGETALL ${key}`);\n      return {\n        success: true,\n        operation: 'hgetall',\n        key,\n        hash: {},\n        message: 'Redis HGETALL simulated. Install redis client for production use.'\n      };\n    }\n    \n    case 'publish': {\n      if (!channel) {\n        return {\n          path: 'error',\n          error: 'Channel is required for publish operation'\n        };\n      }\n      \n      // Convert objects to JSON string\n      let finalMessage = message;\n      if (typeof message === 'object') {\n        finalMessage = JSON.stringify(message);\n      }\n      \n      helpers.log(`PUBLISH ${channel} ${finalMessage}`);\n      return {\n        success: true,\n        operation: 'publish',\n        channel,\n        message: finalMessage,\n        subscribers: 0,\n        note: 'Redis PUBLISH simulated. Install redis client for production use.'\n      };\n    }\n    \n    default:\n      return {\n        path: 'error',\n        error: `Unknown operation: ${operation}`\n      };\n  }\n} catch (error) {\n  helpers.error('Redis operation failed:', error);\n  return {\n    path: 'error',\n    error: error.message,\n    details: error.stack\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Template implementation. Install redis client for production: npm install redis"
+  }
+}

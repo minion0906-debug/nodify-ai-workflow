@@ -1,0 +1,247 @@
+{
+  "id": "youtube",
+  "version": "1.0",
+  "name": "YouTube",
+  "description": "Upload videos, manage playlists, get analytics, and interact with YouTube content.",
+  "group": "Social Media",
+  "subGroup": "YouTube",
+  "category": "action",
+  "shape": "circle",
+  "color": "#FF0000",
+  "icon": "Youtube",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "credential",
+      "displayName": "YouTube API Key / OAuth Token",
+      "type": "credential",
+      "credentialType": "youtube",
+      "required": true,
+      "description": "YouTube Data API v3 credentials"
+    },
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "uploadVideo",
+      "options": [
+        {
+          "value": "uploadVideo",
+          "label": "Upload Video"
+        },
+        {
+          "value": "updateVideo",
+          "label": "Update Video"
+        },
+        {
+          "value": "deleteVideo",
+          "label": "Delete Video"
+        },
+        {
+          "value": "searchVideos",
+          "label": "Search Videos"
+        },
+        {
+          "value": "getVideoStats",
+          "label": "Get Video Statistics"
+        },
+        {
+          "value": "createPlaylist",
+          "label": "Create Playlist"
+        },
+        {
+          "value": "addToPlaylist",
+          "label": "Add to Playlist"
+        }
+      ],
+      "description": "The operation to perform"
+    },
+    {
+      "name": "videoFile",
+      "displayName": "Video File URL",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "URL or path to the video file",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo"]
+        }
+      }
+    },
+    {
+      "name": "title",
+      "displayName": "Video Title",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Title of the video",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo", "updateVideo"]
+        }
+      }
+    },
+    {
+      "name": "description",
+      "displayName": "Description",
+      "type": "text",
+      "default": "",
+      "description": "Video description",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo", "updateVideo"]
+        }
+      }
+    },
+    {
+      "name": "tags",
+      "displayName": "Tags",
+      "type": "text",
+      "default": "",
+      "description": "Comma-separated tags",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo", "updateVideo"]
+        }
+      }
+    },
+    {
+      "name": "privacy",
+      "displayName": "Privacy Status",
+      "type": "options",
+      "default": "private",
+      "options": [
+        {
+          "value": "public",
+          "label": "Public"
+        },
+        {
+          "value": "unlisted",
+          "label": "Unlisted"
+        },
+        {
+          "value": "private",
+          "label": "Private"
+        }
+      ],
+      "description": "Video privacy setting",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo", "updateVideo"]
+        }
+      }
+    },
+    {
+      "name": "categoryId",
+      "displayName": "Category ID",
+      "type": "string",
+      "default": "22",
+      "description": "YouTube category ID (22 = People & Blogs)",
+      "displayOptions": {
+        "show": {
+          "operation": ["uploadVideo", "updateVideo"]
+        }
+      }
+    },
+    {
+      "name": "videoId",
+      "displayName": "Video ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "YouTube video ID",
+      "displayOptions": {
+        "show": {
+          "operation": ["updateVideo", "deleteVideo", "getVideoStats", "addToPlaylist"]
+        }
+      }
+    },
+    {
+      "name": "searchQuery",
+      "displayName": "Search Query",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Search term for videos",
+      "displayOptions": {
+        "show": {
+          "operation": ["searchVideos"]
+        }
+      }
+    },
+    {
+      "name": "maxResults",
+      "displayName": "Max Results",
+      "type": "number",
+      "default": 10,
+      "description": "Maximum number of results (1-50)",
+      "displayOptions": {
+        "show": {
+          "operation": ["searchVideos"]
+        }
+      }
+    },
+    {
+      "name": "playlistTitle",
+      "displayName": "Playlist Title",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Title of the new playlist",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPlaylist"]
+        }
+      }
+    },
+    {
+      "name": "playlistDescription",
+      "displayName": "Playlist Description",
+      "type": "text",
+      "default": "",
+      "description": "Description of the playlist",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPlaylist"]
+        }
+      }
+    },
+    {
+      "name": "playlistId",
+      "displayName": "Playlist ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "YouTube playlist ID",
+      "displayOptions": {
+        "show": {
+          "operation": ["addToPlaylist"]
+        }
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Executing YouTube operation:', node.properties.operation.value);\n\nconst apiKey = node.properties.credential.value;\nconst operation = node.properties.operation.value;\n\nlet result;\n\nif (operation === 'uploadVideo') {\n  const title = node.properties.title.value;\n  const description = node.properties.description.value;\n  const tags = node.properties.tags.value.split(',').map(t => t.trim());\n  const privacy = node.properties.privacy.value;\n  const categoryId = node.properties.categoryId.value;\n  \n  helpers.log('Uploading video:', title);\n  helpers.warn('Note: Video upload requires OAuth 2.0 and multipart upload. This is a simplified example.');\n  \n  const metadata = {\n    snippet: {\n      title: title,\n      description: description,\n      tags: tags,\n      categoryId: categoryId\n    },\n    status: {\n      privacyStatus: privacy\n    }\n  };\n  \n  const response = await fetch(`https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&key=${apiKey}`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify(metadata)\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Video uploaded successfully:', result.id);\n  \n} else if (operation === 'updateVideo') {\n  const videoId = node.properties.videoId.value;\n  const title = node.properties.title.value;\n  const description = node.properties.description.value;\n  const privacy = node.properties.privacy.value;\n  \n  helpers.log('Updating video:', videoId);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&key=${apiKey}`, {\n    method: 'PUT',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      id: videoId,\n      snippet: {\n        title: title,\n        description: description,\n        categoryId: node.properties.categoryId.value\n      },\n      status: {\n        privacyStatus: privacy\n      }\n    })\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Video updated successfully');\n  \n} else if (operation === 'deleteVideo') {\n  const videoId = node.properties.videoId.value;\n  \n  helpers.log('Deleting video:', videoId);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}`, {\n    method: 'DELETE'\n  });\n  \n  if (!response.ok) {\n    const error = await response.json();\n    helpers.error('YouTube API error:', error.error?.message);\n    throw new Error(`YouTube API error: ${error.error?.message || 'Failed to delete'}`);\n  }\n  \n  result = { success: true, videoId: videoId };\n  helpers.log('Video deleted successfully');\n  \n} else if (operation === 'searchVideos') {\n  const query = encodeURIComponent(node.properties.searchQuery.value);\n  const maxResults = node.properties.maxResults.value || 10;\n  \n  helpers.log('Searching videos:', node.properties.searchQuery.value);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&maxResults=${maxResults}&type=video&key=${apiKey}`);\n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  helpers.log(`Found ${result.items?.length || 0} videos`);\n  \n} else if (operation === 'getVideoStats') {\n  const videoId = node.properties.videoId.value;\n  \n  helpers.log('Getting statistics for video:', videoId);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoId}&key=${apiKey}`);\n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  if (result.items && result.items.length > 0) {\n    const stats = result.items[0].statistics;\n    helpers.log(`Views: ${stats.viewCount}, Likes: ${stats.likeCount}`);\n  }\n  \n} else if (operation === 'createPlaylist') {\n  const title = node.properties.playlistTitle.value;\n  const description = node.properties.playlistDescription.value;\n  \n  helpers.log('Creating playlist:', title);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet,status&key=${apiKey}`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      snippet: {\n        title: title,\n        description: description\n      },\n      status: {\n        privacyStatus: 'private'\n      }\n    })\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Playlist created:', result.id);\n  \n} else if (operation === 'addToPlaylist') {\n  const playlistId = node.properties.playlistId.value;\n  const videoId = node.properties.videoId.value;\n  \n  helpers.log('Adding video to playlist:', videoId, '->', playlistId);\n  \n  const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&key=${apiKey}`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      snippet: {\n        playlistId: playlistId,\n        resourceId: {\n          kind: 'youtube#video',\n          videoId: videoId\n        }\n      }\n    })\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('YouTube API error:', result.error.message);\n    throw new Error(`YouTube API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Video added to playlist successfully');\n}\n\nreturn {\n  ...data,\n  youtube: result\n};",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-23",
+    "updatedAt": "2025-10-23"
+  }
+}

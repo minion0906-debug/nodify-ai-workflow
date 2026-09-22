@@ -1,0 +1,59 @@
+{
+  "id": "code_node",
+  "version": "1.0",
+  "name": "Code",
+  "description": "Run custom JavaScript to transform or generate data.",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#0EA5E9",
+  "icon": "Code2",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "code",
+      "displayName": "JavaScript Code",
+      "type": "javascript",
+      "default": "// Access input data with 'data' or 'items'\n// Use 'execution' to access other nodes\nreturn data;",
+      "required": true
+    },
+    {
+      "name": "runMode",
+      "displayName": "Run Mode",
+      "type": "select",
+      "default": "once",
+      "options": [
+        {
+          "label": "Once for All Items",
+          "value": "once"
+        },
+        {
+          "label": "Once per Item",
+          "value": "each"
+        }
+      ]
+    }
+  ],
+  "executionCode": "const userCode = node.properties.code.value || '';\nconst runMode = node.properties.runMode?.value || 'once';\n\nif (!userCode.trim()) {\n  return data;\n}\n\nhelpers.log('=== CODE NODE EXECUTION ===');\nhelpers.log('Code to execute:', userCode);\nhelpers.log('Available nodes in $:', Object.keys($));\nhelpers.log('Input data:', data);\n\ntry {\n  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;\n  \n  const wrappedCode = `\n    try {\n      ${userCode}\n    } catch (err) {\n      helpers.error('Runtime error in user code:', err.message);\n      throw err;\n    }\n  `;\n  \n  const userFunction = new AsyncFunction(\n    'node',\n    'data', \n    'items', \n    'execution', \n    '$', \n    '$input', \n    'helpers', \n    'env', \n    'services',\n    'window',\n    'alert',\n    'console',\n    'document',\n    wrappedCode\n  );\n  \n  const globalWindow = typeof window !== 'undefined' ? window : {};\n  const globalAlert = typeof window !== 'undefined' && window.alert ? window.alert.bind(window) : (msg) => helpers.log('ALERT:', msg);\n  const globalConsole = typeof console !== 'undefined' ? console : { log: helpers.log, error: helpers.error, warn: helpers.warn };\n  const globalDocument = typeof document !== 'undefined' ? document : {};\n  \n  if (runMode === 'once') {\n    const result = await userFunction(node, data, items, execution, $, $input, helpers, env, services, globalWindow, globalAlert, globalConsole, globalDocument);\n    helpers.log('Execution completed. Result:', result);\n    return result !== undefined ? result : data;\n  } else {\n    if (!items || items.length === 0) {\n      const result = await userFunction(node, data, [], execution, $, $input, helpers, env, services, globalWindow, globalAlert, globalConsole, globalDocument);\n      return result !== undefined ? result : data;\n    }\n    const results = [];\n    for (const item of items) {\n      const result = await userFunction(node, item, items, execution, $, $input, helpers, env, services, globalWindow, globalAlert, globalConsole, globalDocument);\n      results.push(result !== undefined ? result : item);\n    }\n    return results;\n  }\n} catch (error) {\n  helpers.error('=== CODE EXECUTION FAILED ===');\n  helpers.error('Error:', error.message);\n  helpers.error('Stack:', error.stack);\n  helpers.error('Code was:', userCode);\n  return { error: error.message, stack: error.stack, code: userCode };\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "memory_session",
+  "version": "1.0",
+  "name": "Session Memory",
+  "description": "Temporary in-memory conversation storage. Persists only during workflow execution session.",
+  "group": "AI Memory",
+  "category": "ai",
+  "shape": "3x2",
+  "color": "#8B5CF6",
+  "icon": "Zap",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Memory",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "memoryWindow",
+      "displayName": "History Window",
+      "type": "number",
+      "default": 10,
+      "description": "Number of message pairs to keep in memory"
+    },
+    {
+      "name": "notice",
+      "displayName": "Info",
+      "type": "notice",
+      "default": "Session Memory stores messages temporarily during execution. Memory is lost when workflow execution ends. Good for quick, stateless conversations."
+    }
+  ],
+  "executionCode": "const sessionId = data?.sessionId || 'default';\nconst memoryWindow = parseInt(node.properties.memoryWindow?.value || 10);\n\nhelpers.log(`[Session Memory] Using session: ${sessionId}`);\n\nif (!execution['__sessionMemory']) {\n  execution['__sessionMemory'] = {};\n}\n\nif (!execution['__sessionMemory'][sessionId]) {\n  execution['__sessionMemory'][sessionId] = [];\n  helpers.log('Initialized new session memory');\n}\n\nconst sessionMessages = execution['__sessionMemory'][sessionId];\nconst recentMessages = sessionMessages.slice(-memoryWindow * 2);\n\nhelpers.log(`Loaded ${recentMessages.length} messages from session`);\n\nreturn {\n  messages: recentMessages,\n  chatId: data?.chatId,\n  sessionId,\n  memoryWindow,\n  type: 'session'\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

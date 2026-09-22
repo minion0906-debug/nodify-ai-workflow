@@ -1,0 +1,26 @@
+{
+  "id": "google_calendar_create_event",
+  "version": "1.0",
+  "name": "Google Calendar Create Event",
+  "description": "Create an event in Google Calendar using OAuth2 access token.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#0B8043",
+  "icon": "Calendar",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [ { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }, { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 } ],
+  "properties": [
+    { "name": "credentials", "displayName": "OAuth2 Credentials", "type": "credentials", "typeOptions": { "credentialType": "oauth2" }, "required": true },
+    { "name": "calendarId", "displayName": "Calendar ID", "type": "string", "required": true, "default": "primary" },
+    { "name": "summary", "displayName": "Summary", "type": "string", "default": "New Event" },
+    { "name": "description", "displayName": "Description", "type": "string", "ui": { "component": "textarea" }, "default": "" },
+    { "name": "start", "displayName": "Start ISO", "type": "string", "required": true, "placeholder": "2025-10-22T10:00:00Z" },
+    { "name": "end", "displayName": "End ISO", "type": "string", "required": true, "placeholder": "2025-10-22T11:00:00Z" },
+    { "name": "timezone", "displayName": "Time Zone", "type": "string", "default": "UTC" }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const calendarId = node.properties.calendarId?.value || 'primary';\n  const summary = node.properties.summary?.value || 'New Event';\n  const description = node.properties.description?.value || '';\n  const start = node.properties.start?.value;\n  const end = node.properties.end?.value;\n  const timezone = node.properties.timezone?.value || 'UTC';\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!start || !end) return { path: 'error', error: 'start and end are required' };\n\n  let accessToken = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); accessToken = cred?.accessToken || null; }\n  if (!accessToken && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); accessToken = d?.data?.accessToken || null; } }\n  if (!accessToken && env?.GOOGLE_ACCESS_TOKEN) accessToken = env.GOOGLE_ACCESS_TOKEN;\n  if (!accessToken) return { path: 'error', error: 'No OAuth2 access token provided' };\n\n  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`;\n  const payload = { summary, description, start: { dateTime: start, timeZone: timezone }, end: { dateTime: end, timeZone: timezone } };\n  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` }, body: JSON.stringify(payload) });\n  const result = await res.json();\n  if (!res.ok) return { path: 'error', error: result.error?.message || 'Google Calendar API error', status: res.status, details: result };\n  return { success: true, id: result.id, htmlLink: result.htmlLink, raw: result };\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

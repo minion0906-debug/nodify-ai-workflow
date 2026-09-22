@@ -1,0 +1,236 @@
+{
+  "id": "loop_node",
+  "version": "1.0",
+  "name": "Loop",
+  "description": "Iterate over arrays or numeric ranges. Process items individually or in batches. Includes batch metadata, delays, and n8n-style loop/done outputs.",
+  "group": "Logic",
+  "category": "logic",
+  "executionEnvironment": "client",
+  "processItemsIndividually": false,
+  "shape": "2x2",
+  "color": "#8B5CF6",
+  "icon": "Repeat",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "array",
+      "slot": 1
+    },
+    {
+      "id": "continue",
+      "label": "Continue",
+      "position": "bottom",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "done",
+      "label": "Done",
+      "position": "right",
+      "type": "array",
+      "slot": 1
+    },
+    {
+      "id": "loop",
+      "label": "Loop Item",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "loopMode",
+      "displayName": "Loop Mode",
+      "type": "options",
+      "default": "array",
+      "required": true,
+      "options": [
+        {
+          "value": "array",
+          "label": "Iterate Array"
+        },
+        {
+          "value": "numeric",
+          "label": "Numeric Range"
+        }
+      ],
+      "description": "Choose between iterating over an array or a numeric range"
+    },
+    {
+      "name": "inputArray",
+      "displayName": "Input Array",
+      "type": "string",
+      "default": "{{data}}",
+      "description": "Array to iterate over. Can use {{data}} or {{data.items}}",
+      "ui": {
+        "component": "code"
+      },
+      "displayOptions": {
+        "show": {
+          "loopMode": [
+            "array"
+          ]
+        }
+      }
+    },
+    {
+      "name": "startValue",
+      "displayName": "Start Value",
+      "type": "number",
+      "default": 0,
+      "description": "Starting value for numeric loop (inclusive)",
+      "displayOptions": {
+        "show": {
+          "loopMode": [
+            "numeric"
+          ]
+        }
+      }
+    },
+    {
+      "name": "endValue",
+      "displayName": "End Value",
+      "type": "number",
+      "default": 10,
+      "description": "Ending value for numeric loop (exclusive)",
+      "displayOptions": {
+        "show": {
+          "loopMode": [
+            "numeric"
+          ]
+        }
+      }
+    },
+    {
+      "name": "stepValue",
+      "displayName": "Step Value",
+      "type": "number",
+      "default": 1,
+      "description": "Increment value for each iteration",
+      "displayOptions": {
+        "show": {
+          "loopMode": [
+            "numeric"
+          ]
+        }
+      }
+    },
+    {
+      "name": "batchMode",
+      "displayName": "Batch Mode",
+      "type": "options",
+      "default": "individual",
+      "options": [
+        {
+          "value": "individual",
+          "label": "Process Items Individually"
+        },
+        {
+          "value": "batch",
+          "label": "Process in Batches"
+        }
+      ],
+      "description": "Choose whether to process items one by one or in batches"
+    },
+    {
+      "name": "batchSize",
+      "displayName": "Batch Size",
+      "type": "number",
+      "default": 10,
+      "description": "Number of items per batch. In 'Individual' mode, this adds batch metadata. In 'Batch' mode, items are grouped into arrays of this size.",
+      "displayOptions": {
+        "show": {
+          "batchMode": [
+            "batch"
+          ]
+        }
+      }
+    },
+    {
+      "name": "delayBetweenItems",
+      "displayName": "Delay Between Iterations (ms)",
+      "type": "number",
+      "default": 0,
+      "description": "Milliseconds to wait between each iteration. In Individual mode: delay between items. In Batch mode: delay between batches."
+    },
+    {
+      "name": "waitForDone",
+      "displayName": "Wait For Done",
+      "type": "boolean",
+      "default": true,
+      "description": "If enabled, the node will emit 'Done' only after all loop iterations and their downstream nodes finish executing. If disabled, 'Done' is emitted immediately after scheduling iterations."
+    },
+    {
+      "name": "maxIterations",
+      "displayName": "Max Iterations",
+      "type": "number",
+      "default": 0,
+      "description": "Maximum number of iterations. Use 0 for unlimited."
+    },
+    {
+      "name": "continueOnError",
+      "displayName": "Continue On Error",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, the loop continues even if an iteration fails. Failed items are tracked separately."
+    },
+    {
+      "name": "accumulateResults",
+      "displayName": "Accumulate Results",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, results from each iteration are collected and returned in the 'done' output."
+    },
+    {
+      "name": "resetOnEachIteration",
+      "displayName": "Reset On Each Iteration",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, the loop can be restarted with a new set of items based on the payload arriving via the back-edge (useful for pagination). When the branch sends an array as 'loopItems' or 'items', the loop restarts with those items."
+    },
+    {
+      "name": "pauseBetweenBatches",
+      "displayName": "Pause Between Batches (ms)",
+      "type": "number",
+      "default": 0,
+      "description": "Extra delay (in milliseconds) to wait after completing each batch. Only applies in Batch mode.",
+      "displayOptions": {
+        "show": {
+          "batchMode": [
+            "batch"
+          ]
+        }
+      }
+    },
+    {
+      "name": "appendData",
+      "displayName": "Append Data",
+      "type": "boolean",
+      "default": true,
+      "description": "Merge input data into node output before passing to the next node.",
+      "ui": {
+        "group": "Advanced"
+      }
+    },
+    {
+      "name": "stopOnError",
+      "displayName": "Stop On Error",
+      "type": "boolean",
+      "default": true,
+      "description": "If disabled, the flow will continue and optionally follow the error path when the node fails.",
+      "ui": {
+        "group": "Advanced"
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Starting Loop node'); const loopMode = node.properties.loopMode.value || 'array'; const batchMode = node.properties.batchMode?.value || 'individual'; const batchSize = parseInt(node.properties.batchSize?.value) || (batchMode === 'batch' ? 10 : 1); const delayBetweenItems = node.properties.delayBetweenItems.value || 0; const maxIterations = node.properties.maxIterations.value || 0; helpers.log(`Mode: ${loopMode}, Batch Mode: ${batchMode}`); helpers.log(`Configuration: batchSize=${batchSize}, delay=${delayBetweenItems}ms, maxIterations=${maxIterations}`); let itemsToProcess = []; if (loopMode === 'array') { let inputArray = node.properties.inputArray?.value; helpers.log(`Property inputArray type: ${typeof inputArray}`); helpers.log(`Data parameter type: ${typeof data}`); if (!inputArray || inputArray === '{{data}}' || inputArray === undefined) { helpers.log('Using data parameter directly'); inputArray = data; } else if (typeof inputArray === 'string' && inputArray.includes('{{data')) { helpers.log('Attempting to resolve expression'); if (inputArray === '{{data}}') { inputArray = data; } else if (inputArray.includes('{{data.')) { const match = inputArray.match(/\\{\\{data\\.([^}]+)\\}\\}/); if (match) { const path = match[1].split('.'); let value = data; for (const key of path) { value = value?.[key]; } inputArray = value; } } } else if (typeof inputArray === 'string') { try { inputArray = JSON.parse(inputArray); } catch (e) { helpers.warn('Could not parse as JSON'); } } helpers.log(`Resolved input type: ${typeof inputArray}, isArray: ${Array.isArray(inputArray)}`); if (!Array.isArray(inputArray) && inputArray && typeof inputArray === 'object') { helpers.log('Input is object, checking for array properties'); if (Array.isArray(inputArray.rows)) { helpers.log('Detected Table output (.rows)'); inputArray = inputArray.rows; } else if (Array.isArray(inputArray.items)) { helpers.log('Detected .items property'); inputArray = inputArray.items; } else if (Array.isArray(inputArray.data)) { helpers.log('Detected .data property'); inputArray = inputArray.data; } else if (Array.isArray(inputArray.results)) { helpers.log('Detected .results property'); inputArray = inputArray.results; } else if (Array.isArray(inputArray.loopItems)) { helpers.log('Detected Loop output (.loopItems)'); inputArray = inputArray.loopItems; } else { helpers.warn('Object has no recognizable array property'); } } if (!Array.isArray(inputArray)) { helpers.error(`Input is not an array. Type: ${typeof inputArray}`); const receivedStr = JSON.stringify(inputArray); if (receivedStr) { helpers.error(`Received: ${(receivedStr || '').substring(0, 200)}`); } helpers.log('TIPS:'); helpers.log('- For Table output: use {{data.rows}}'); helpers.log('- For numeric loops: switch to \"Numeric Range\" mode'); helpers.log('- Check that previous node is returning data'); return { path: 'error', error: 'Input is not an array', receivedType: typeof inputArray, tip: 'Use {{data.rows}} for Table output, or switch to Numeric Range mode' }; } helpers.log(`Array has ${inputArray.length} items`); itemsToProcess = maxIterations > 0 ? inputArray.slice(0, maxIterations) : inputArray; if (maxIterations > 0 && maxIterations < inputArray.length) { helpers.log(`Limited to ${maxIterations} iterations`); } } else if (loopMode === 'numeric') { const startValue = node.properties.startValue.value !== undefined ? node.properties.startValue.value : 0; const endValue = node.properties.endValue.value !== undefined ? node.properties.endValue.value : 10; const stepValue = node.properties.stepValue.value !== undefined ? node.properties.stepValue.value : 1; helpers.log(`Numeric: start=${startValue}, end=${endValue}, step=${stepValue}`); if (stepValue === 0) { helpers.error('Step cannot be zero'); return { path: 'error', error: 'Step value cannot be zero' }; } const isIncreasing = stepValue > 0; const shouldContinue = isIncreasing ? (c) => c < endValue : (c) => c > endValue; let current = startValue; const numericArray = []; while (shouldContinue(current)) { numericArray.push(current); current += stepValue; if (numericArray.length > 100000) { helpers.error('Exceeded 100k iterations limit'); return { path: 'error', error: 'Loop exceeded safety limit' }; } } helpers.log(`Generated ${numericArray.length} values`); itemsToProcess = maxIterations > 0 ? numericArray.slice(0, maxIterations) : numericArray; } const continueOnError = node.properties.continueOnError?.value || false; const accumulateResults = node.properties.accumulateResults?.value || false; const pauseBetweenBatches = node.properties.pauseBetweenBatches?.value || 0; helpers.log(`Processing ${itemsToProcess.length} items with batchMode=${batchMode}, batchSize=${batchSize}`); helpers.log(`Advanced options: continueOnError=${continueOnError}, accumulateResults=${accumulateResults}, pauseBetweenBatches=${pauseBetweenBatches}ms`); const totalItems = itemsToProcess.length; const effectiveBatchSize = batchSize > 0 ? batchSize : totalItems; const totalBatches = Math.ceil(totalItems / effectiveBatchSize); const startTime = Date.now(); helpers.log(`Total batches: ${totalBatches}, items per batch: ${effectiveBatchSize}`); if (batchMode === 'batch') { helpers.log('Batch mode: Creating batches of items'); const batches = []; for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) { const batchStartTime = Date.now(); const startIdx = batchIdx * effectiveBatchSize; const endIdx = Math.min(startIdx + effectiveBatchSize, totalItems); const batchItems = itemsToProcess.slice(startIdx, endIdx); if (batchIdx > 0 && delayBetweenItems > 0) { helpers.log(`Applying delay between batches: ${delayBetweenItems}ms`); await new Promise(r => setTimeout(r, delayBetweenItems)); } if (batchIdx > 0 && pauseBetweenBatches > 0) { helpers.log(`Pausing between batches: ${pauseBetweenBatches}ms`); await new Promise(r => setTimeout(r, pauseBetweenBatches)); } const progress = Math.round((batchIdx / totalBatches) * 100); batches.push({ batchIndex: batchIdx, totalBatches: totalBatches, items: batchItems, count: batchItems.length, isFirst: batchIdx === 0, isLast: batchIdx === totalBatches - 1, mode: loopMode, startIndex: startIdx, endIndex: endIdx - 1, progress: progress, elapsedTime: Date.now() - startTime, timestamp: new Date().toISOString() }); } const totalTime = Date.now() - startTime; helpers.log(`Created ${batches.length} batches in ${totalTime}ms`); return { loopItems: batches, totalCount: batches.length, batchSize: effectiveBatchSize, totalBatches: totalBatches, totalItems: totalItems, mode: loopMode, batchMode: 'batch', executionTime: totalTime, startedAt: new Date(startTime).toISOString(), completedAt: new Date().toISOString() }; } else { helpers.log('Individual mode: Processing items one by one with batch metadata'); const results = []; for (let i = 0; i < totalItems; i++) { const item = itemsToProcess[i]; const currentBatchIndex = Math.floor(i / effectiveBatchSize); const indexInBatch = i % effectiveBatchSize; const isFirstInBatch = indexInBatch === 0; const isLastInBatch = indexInBatch === effectiveBatchSize - 1 || i === totalItems - 1; if (i > 0 && delayBetweenItems > 0) { await new Promise(r => setTimeout(r, delayBetweenItems)); } results.push({ index: i, total: totalItems, item: item, value: item, isFirst: i === 0, isLast: i === totalItems - 1, mode: loopMode, batchIndex: currentBatchIndex, totalBatches: totalBatches, indexInBatch: indexInBatch, itemsInCurrentBatch: Math.min(effectiveBatchSize, totalItems - currentBatchIndex * effectiveBatchSize), isFirstInBatch: isFirstInBatch, isLastInBatch: isLastInBatch }); } helpers.log(`Completed ${results.length} items in ${totalBatches} batches`); return { loopItems: results, totalCount: results.length, batchSize: effectiveBatchSize, totalBatches: totalBatches, mode: loopMode, batchMode: 'individual' }; }",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

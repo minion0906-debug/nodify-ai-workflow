@@ -1,0 +1,27 @@
+{
+  "id": "twilio_send_message",
+  "version": "1.0",
+  "name": "Twilio Send Message",
+  "description": "Send an SMS/WhatsApp message via Twilio.",
+  "group": "Actions",
+  "category": "action",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#F22F46",
+  "icon": "Phone",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [
+    { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 },
+    { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 }
+  ],
+  "properties": [
+    { "name": "credentials", "displayName": "Twilio Credentials", "type": "credentials", "typeOptions": { "credentialType": "twilio" }, "required": true },
+    { "name": "from", "displayName": "From", "type": "string", "required": true, "placeholder": "+1415... or whatsapp:+1415..." },
+    { "name": "to", "displayName": "To", "type": "string", "required": true },
+    { "name": "body", "displayName": "Body", "type": "string", "default": "{{data.message}}" },
+    { "name": "mediaUrl", "displayName": "Media URL (Optional)", "type": "string" }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const from = node.properties.from?.value;\n  const to = node.properties.to?.value;\n  const body = node.properties.body?.value || '';\n  const mediaUrl = node.properties.mediaUrl?.value;\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!from || !to) return { path: 'error', error: 'from and to are required' };\n\n  let accountSid = null, authToken = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); accountSid = cred?.accountSid; authToken = cred?.authToken; }\n  if ((!accountSid || !authToken) && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); accountSid = d?.data?.accountSid; authToken = d?.data?.authToken; } }\n  if ((!accountSid || !authToken) && env?.TWILIO_ACCOUNT_SID && env?.TWILIO_AUTH_TOKEN) { accountSid = env.TWILIO_ACCOUNT_SID; authToken = env.TWILIO_AUTH_TOKEN; }\n  if (!accountSid || !authToken) return { path: 'error', error: 'Missing Twilio credentials' };\n\n  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;\n  const params = new URLSearchParams(); params.append('From', from); params.append('To', to); if (body) params.append('Body', body); if (mediaUrl) params.append('MediaUrl', mediaUrl);\n  const res = await fetch(url, { method: 'POST', headers: { 'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64') }, body: params });\n  const result = await res.json();\n  if (!res.ok) return { path: 'error', error: result.message || 'Twilio API error', status: res.status, details: result };\n  return { success: true, sid: result.sid, status: result.status, raw: result };\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

@@ -1,0 +1,126 @@
+{
+  "id": "webhook_trigger",
+  "version": "1.1",
+  "name": "Webhook",
+  "description": "Starts workflow on HTTP request. Provides unique Test and Production URLs.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "circle",
+  "color": "#0EA5E9",
+  "icon": "Webhook",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "webhookId",
+      "displayName": "Webhook ID",
+      "type": "string",
+      "default": "not_generated",
+      "required": true,
+      "description": "The unique ID for this webhook. Is generated automatically.",
+      "options": {
+        "readOnly": true
+      }
+    },
+    {
+      "name": "method",
+      "displayName": "HTTP Method",
+      "type": "options",
+      "default": "POST",
+      "options": [
+        {
+          "value": "GET",
+          "label": "GET"
+        },
+        {
+          "value": "POST",
+          "label": "POST"
+        },
+        {
+          "value": "PUT",
+          "label": "PUT"
+        },
+        {
+          "value": "DELETE",
+          "label": "DELETE"
+        },
+        {
+          "value": "PATCH",
+          "label": "PATCH"
+        }
+      ],
+      "description": "The HTTP method to listen for."
+    },
+    {
+      "name": "responseMode",
+      "displayName": "Response Mode",
+      "type": "options",
+      "default": "onReceived",
+      "options": [
+        {
+          "value": "onReceived",
+          "label": "On Received"
+        },
+        {
+          "value": "lastNode",
+          "label": "Last Node"
+        }
+      ],
+      "description": "When to send the response: immediately on received or after workflow completes."
+    },
+    {
+      "name": "responseData",
+      "displayName": "Response Data",
+      "type": "json",
+      "default": "{\"status\": \"ok\", \"message\": \"Webhook received\"}",
+      "description": "Custom JSON response to send back. Only used when Response Mode is 'On Received'.",
+      "displayOptions": {
+        "show": {
+          "responseMode": [
+            "onReceived"
+          ]
+        }
+      }
+    },
+    {
+      "name": "notice",
+      "displayName": "Webhook URLs",
+      "type": "notice",
+      "default": "This webhook has two URLs: one for testing and one for production. Use the Test URL for development and the Production URL for live data."
+    },
+    {
+      "name": "testUrl",
+      "displayName": "Test URL",
+      "type": "inputButton",
+      "description": "URL for testing the webhook and capturing data.",
+      "behavior": {
+        "action": "copyToClipboard",
+        "value": "{{window.location.origin}}/api/webhook/test/{{node.config.webhookId}}"
+      }
+    },
+    {
+      "name": "prodUrl",
+      "displayName": "Production URL",
+      "type": "inputButton",
+      "description": "URL for production use. Will trigger the workflow if active.",
+      "behavior": {
+        "action": "copyToClipboard",
+        "value": "{{window.location.origin}}/api/webhook/prod/{{node.config.webhookId}}"
+      }
+    }
+  ],
+  "executionCode": "// The webhook data (body, headers, query) is passed in as 'data'.\nreturn { ...data };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06",
+    "updatedAt": "2025-10-14"
+  }
+}

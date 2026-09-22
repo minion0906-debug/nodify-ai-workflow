@@ -1,0 +1,117 @@
+{
+  "whatsapp": {
+    "baseUrl": "https://graph.facebook.com/v18.0",
+    "auth": "Bearer Token",
+    "nodes": {
+      "send-message": {
+        "endpoint": "/{phoneNumberId}/messages",
+        "method": "POST",
+        "requiredProps": ["credential", "phoneNumberId", "recipientPhone", "message"],
+        "optionalProps": ["previewUrl"]
+      },
+      "send-template": {
+        "endpoint": "/{phoneNumberId}/messages",
+        "method": "POST",
+        "requiredProps": ["credential", "phoneNumberId", "recipientPhone", "templateName", "language"],
+        "optionalProps": ["parameters"]
+      },
+      "upload-media": {
+        "endpoint": "/{phoneNumberId}/media",
+        "method": "POST",
+        "requiredProps": ["credential", "phoneNumberId", "file", "type"],
+        "optionalProps": []
+      },
+      "download-media": {
+        "endpoint": "/{mediaId}",
+        "method": "GET",
+        "requiredProps": ["credential", "mediaId"],
+        "optionalProps": []
+      },
+      "delete-media": {
+        "endpoint": "/{mediaId}",
+        "method": "DELETE",
+        "requiredProps": ["credential", "mediaId"],
+        "optionalProps": []
+      }
+    }
+  },
+  "telegram": {
+    "baseUrl": "https://api.telegram.org/bot{token}",
+    "auth": "Bot Token in URL",
+    "commonMethods": [
+      "sendMessage",
+      "sendPhoto",
+      "sendVideo",
+      "sendDocument",
+      "sendAudio",
+      "sendLocation",
+      "sendSticker",
+      "sendAnimation",
+      "deleteMessage",
+      "editMessageText",
+      "pinChatMessage",
+      "unpinChatMessage",
+      "getChat",
+      "getChatAdministrators",
+      "getChatMember",
+      "leaveChat",
+      "setChatDescription",
+      "setChatTitle",
+      "getFile",
+      "answerCallbackQuery",
+      "answerInlineQuery"
+    ]
+  },
+  "youtube": {
+    "baseUrl": "https://www.googleapis.com/youtube/v3",
+    "auth": "API Key or OAuth2",
+    "resources": {
+      "channels": ["list", "update"],
+      "playlists": ["list", "insert", "update", "delete"],
+      "playlistItems": ["list", "insert", "update", "delete"],
+      "videos": ["list", "insert", "update", "delete", "rate"],
+      "channelBanners": ["insert"]
+    }
+  },
+  "instagram": {
+    "baseUrl": "https://graph.facebook.com/v18.0",
+    "auth": "Access Token",
+    "resources": {
+      "media": ["publish", "insights", "comments"],
+      "stories": ["publish"],
+      "reels": ["publish"],
+      "insights": ["account", "media"]
+    }
+  },
+  "facebook": {
+    "baseUrl": "https://graph.facebook.com/v18.0",
+    "auth": "Access Token",
+    "resources": {
+      "posts": ["create", "get", "delete"],
+      "photos": ["create"],
+      "videos": ["create"],
+      "comments": ["list", "create", "delete"],
+      "insights": ["page", "post"]
+    }
+  },
+  "twitter": {
+    "baseUrl": "https://api.twitter.com/2",
+    "auth": "Bearer Token or OAuth2",
+    "resources": {
+      "tweets": ["create", "delete", "lookup", "retweet", "unretweet", "search"],
+      "likes": ["like", "unlike"],
+      "users": ["lookup", "followers", "following", "follow", "unfollow"]
+    }
+  },
+  "linkedin": {
+    "baseUrl": "https://api.linkedin.com/v2",
+    "auth": "OAuth2",
+    "resources": {
+      "ugcPosts": ["create", "get", "delete"],
+      "articles": ["create"],
+      "comments": ["list", "create"],
+      "profile": ["get"],
+      "organizations": ["get", "share"]
+    }
+  }
+}

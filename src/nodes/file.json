@@ -1,0 +1,214 @@
+{
+  "id": "file_node",
+  "version": "1.0",
+  "name": "File",
+  "description": "Perform file operations: Create, Read, Update, Delete, and List files.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#F59E0B",
+  "icon": "FileText",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "read",
+      "required": true,
+      "description": "The file operation to perform",
+      "options": [
+        {
+          "id": "op-create",
+          "label": "Create/Write File",
+          "value": "create"
+        },
+        {
+          "id": "op-read",
+          "label": "Read File",
+          "value": "read"
+        },
+        {
+          "id": "op-append",
+          "label": "Append to File",
+          "value": "append"
+        },
+        {
+          "id": "op-delete",
+          "label": "Delete File",
+          "value": "delete"
+        },
+        {
+          "id": "op-exists",
+          "label": "Check if Exists",
+          "value": "exists"
+        },
+        {
+          "id": "op-list",
+          "label": "List Directory",
+          "value": "list"
+        },
+        {
+          "id": "op-save-downloaded",
+          "label": "Save Downloaded File",
+          "value": "saveDownloaded"
+        }
+      ]
+    },
+    {
+      "name": "fileId",
+      "displayName": "File ID",
+      "type": "string",
+      "placeholder": "{{data.file.id}}",
+      "description": "File ID from HTTP Request or other source",
+      "ui": {
+        "component": "code"
+      },
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "saveDownloaded"
+          ]
+        }
+      }
+    },
+    {
+      "name": "filePath",
+      "displayName": "File Path",
+      "type": "string",
+      "required": true,
+      "placeholder": "/path/to/file.txt or ./data/{{data.filename}}",
+      "description": "Absolute or relative path to the file. You can use template variables. For 'Save Downloaded File', leave empty to use original filename.",
+      "ui": {
+        "component": "code"
+      },
+      "displayOptions": {
+        "hide": {
+          "operation": [
+            "saveDownloaded"
+          ]
+        }
+      }
+    },
+    {
+      "name": "saveFilePath",
+      "displayName": "Save Path",
+      "type": "string",
+      "required": false,
+      "placeholder": "./downloads/{{data.file.name}} or leave empty for current directory",
+      "description": "Where to save the file. Leave empty to save with original filename in current directory.",
+      "ui": {
+        "component": "code"
+      },
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "saveDownloaded"
+          ]
+        }
+      }
+    },
+    {
+      "name": "content",
+      "displayName": "Content",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "placeholder": "File content or {{data.content}}",
+      "description": "Content to write to the file. Supports template variables.",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "create",
+            "append"
+          ]
+        }
+      }
+    },
+    {
+      "name": "encoding",
+      "displayName": "Encoding",
+      "type": "options",
+      "default": "utf8",
+      "description": "File encoding",
+      "options": [
+        {
+          "id": "enc-utf8",
+          "label": "UTF-8",
+          "value": "utf8"
+        },
+        {
+          "id": "enc-base64",
+          "label": "Base64",
+          "value": "base64"
+        },
+        {
+          "id": "enc-binary",
+          "label": "Binary",
+          "value": "binary"
+        },
+        {
+          "id": "enc-hex",
+          "label": "Hex",
+          "value": "hex"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "create",
+            "read",
+            "append"
+          ]
+        }
+      }
+    },
+    {
+      "name": "createDirs",
+      "displayName": "Create Directories",
+      "type": "boolean",
+      "default": true,
+      "description": "Create parent directories if they don't exist",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "create",
+            "append"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "const fs = modules.fs.promises;\nconst path = modules.path;\n\nconst operation = node.properties.operation.value;\nlet filePath = node.properties.filePath?.value || node.properties.saveFilePath?.value;\nlet content = node.properties.content?.value;\nconst encoding = node.properties.encoding?.value || 'utf8';\nconst createDirs = node.properties.createDirs?.value !== false;\nconst fileId = node.properties.fileId?.value;\n\n// Template variable replacement\nconst replaceTemplates = (str, inputData) => {\n  if (typeof str !== 'string') {\n    // If not a string, convert to JSON string\n    return JSON.stringify(str, null, 2);\n  }\n  \n  // Replace {{data}} with full data object\n  if (str === '{{data}}') {\n    return typeof inputData === 'string' ? inputData : JSON.stringify(inputData, null, 2);\n  }\n  \n  // Replace {{data.property}} patterns\n  return str.replace(/\\{\\{data\\.([^}]+)\\}\\}/g, (match, prop) => {\n    const value = inputData?.[prop];\n    return value !== undefined ? String(value) : match;\n  });\n};\n\n// Replace templates in filePath and content\nif (filePath) {\n  filePath = replaceTemplates(filePath, data);\n  // Resolve to absolute path if relative\n  if (!path.isAbsolute(filePath)) {\n    filePath = path.resolve(process.cwd(), filePath);\n  }\n}\n\nif (content !== null && content !== undefined) {\n  content = replaceTemplates(content, data);\n  // Ensure content is always a string\n  if (typeof content !== 'string') {\n    content = JSON.stringify(content, null, 2);\n  }\n}\n\nhelpers.log(`Performing ${operation} operation${filePath ? ' on: ' + filePath : ''}`);\n\ntry {\n  switch (operation) {\n    case 'create': {\n      if (!content && content !== '') {\n        return { \n          path: 'error', \n          error: 'Content is required for create operation',\n          filePath \n        };\n      }\n      \n      // Create parent directories if needed\n      if (createDirs) {\n        const dirPath = path.dirname(filePath);\n        await fs.mkdir(dirPath, { recursive: true });\n      }\n      \n      await fs.writeFile(filePath, content, encoding);\n      \n      return {\n        success: true,\n        operation: 'create',\n        filePath,\n        bytesWritten: Buffer.byteLength(content, encoding)\n      };\n    }\n    \n    case 'read': {\n      // Check if file exists\n      try {\n        await fs.access(filePath);\n      } catch (err) {\n        return { \n          path: 'error', \n          error: `File not found: ${filePath}`,\n          filePath \n        };\n      }\n      \n      const fileContent = await fs.readFile(filePath, encoding);\n      const stats = await fs.stat(filePath);\n      \n      return {\n        success: true,\n        operation: 'read',\n        filePath,\n        content: fileContent,\n        size: stats.size,\n        modified: stats.mtime,\n        created: stats.birthtime\n      };\n    }\n    \n    case 'append': {\n      if (!content && content !== '') {\n        return { \n          path: 'error', \n          error: 'Content is required for append operation',\n          filePath \n        };\n      }\n      \n      // Create parent directories if needed\n      if (createDirs) {\n        const dirPath = path.dirname(filePath);\n        await fs.mkdir(dirPath, { recursive: true });\n      }\n      \n      await fs.appendFile(filePath, content, encoding);\n      \n      return {\n        success: true,\n        operation: 'append',\n        filePath,\n        bytesWritten: Buffer.byteLength(content, encoding)\n      };\n    }\n    \n    case 'delete': {\n      // Check if file exists\n      try {\n        await fs.access(filePath);\n      } catch (err) {\n        return { \n          path: 'error', \n          error: `File not found: ${filePath}`,\n          filePath \n        };\n      }\n      \n      await fs.unlink(filePath);\n      \n      return {\n        success: true,\n        operation: 'delete',\n        filePath\n      };\n    }\n    \n    case 'exists': {\n      try {\n        await fs.access(filePath);\n        const stats = await fs.stat(filePath);\n        \n        return {\n          success: true,\n          operation: 'exists',\n          filePath,\n          exists: true,\n          isFile: stats.isFile(),\n          isDirectory: stats.isDirectory(),\n          size: stats.size,\n          modified: stats.mtime\n        };\n      } catch (err) {\n        return {\n          success: true,\n          operation: 'exists',\n          filePath,\n          exists: false\n        };\n      }\n    }\n    \n    case 'list': {\n      // For list operation, filePath is the directory\n      try {\n        await fs.access(filePath);\n      } catch (err) {\n        return { \n          path: 'error', \n          error: `Directory not found: ${filePath}`,\n          filePath \n        };\n      }\n      \n      const stats = await fs.stat(filePath);\n      if (!stats.isDirectory()) {\n        return { \n          path: 'error', \n          error: `Path is not a directory: ${filePath}`,\n          filePath \n        };\n      }\n      \n      const entries = await fs.readdir(filePath, { withFileTypes: true });\n      const files = [];\n      \n      for (const entry of entries) {\n        const entryPath = path.join(filePath, entry.name);\n        const entryStats = await fs.stat(entryPath);\n        \n        files.push({\n          name: entry.name,\n          path: entryPath,\n          isFile: entry.isFile(),\n          isDirectory: entry.isDirectory(),\n          size: entryStats.size,\n          modified: entryStats.mtime,\n          created: entryStats.birthtime\n        });\n      }\n      \n      return {\n        success: true,\n        operation: 'list',\n        directory: filePath,\n        count: files.length,\n        files\n      };\n    }\n    \n    case 'saveDownloaded': {\n      if (!fileId) {\n        return { \n          path: 'error', \n          error: 'File ID is required for saveDownloaded operation'\n        };\n      }\n      \n      // Import file utilities (client-side)\n      let fileData;\n      try {\n        const { getFile } = await import('@/lib/file-utils');\n        fileData = getFile(fileId);\n        if (!fileData) {\n          return { \n            path: 'error', \n            error: `File not found in memory: ${fileId}` \n          };\n        }\n      } catch (err) {\n        return { \n          path: 'error', \n          error: 'Could not load file utilities. This operation may only work in client environment.' \n        };\n      }\n      \n      // If no filePath specified, use original filename in current directory\n      if (!filePath) {\n        filePath = path.resolve(process.cwd(), fileData.name);\n      }\n      \n      // Resolve relative paths\n      if (!path.isAbsolute(filePath)) {\n        filePath = path.resolve(process.cwd(), filePath);\n      }\n      \n      // Create parent directories if needed\n      if (createDirs) {\n        const dirPath = path.dirname(filePath);\n        await fs.mkdir(dirPath, { recursive: true });\n      }\n      \n      // Convert ArrayBuffer to Buffer and write to disk\n      const buffer = Buffer.from(fileData.buffer);\n      await fs.writeFile(filePath, buffer);\n      \n      helpers.log(`Saved downloaded file to: ${filePath}`);\n      \n      return {\n        success: true,\n        operation: 'saveDownloaded',\n        filePath,\n        fileName: fileData.name,\n        mimeType: fileData.mimeType,\n        size: fileData.size,\n        bytesWritten: buffer.length\n      };\n    }\n    \n    default:\n      return { \n        path: 'error', \n        error: `Unknown operation: ${operation}` \n      };\n  }\n} catch (error) {\n  helpers.error(`File operation failed:`, error);\n  return {\n    path: 'error',\n    error: error.message,\n    code: error.code,\n    filePath,\n    operation\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

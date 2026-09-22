@@ -1,0 +1,389 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Form Builder Schema",
+  "description": "Schema for designing custom forms with full styling control",
+  "type": "object",
+  "properties": {
+    "fields": {
+      "type": "array",
+      "description": "Array of form fields",
+      "items": {
+        "$ref": "#/definitions/FormField"
+      }
+    },
+    "styling": {
+      "$ref": "#/definitions/FormStyling"
+    },
+    "layout": {
+      "$ref": "#/definitions/FormLayout"
+    },
+    "validation": {
+      "$ref": "#/definitions/FormValidation"
+    }
+  },
+  "definitions": {
+    "FormField": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name (used as key in submitted data)",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "email",
+            "password",
+            "number",
+            "tel",
+            "url",
+            "date",
+            "datetime-local",
+            "time",
+            "month",
+            "week",
+            "color",
+            "range",
+            "file",
+            "hidden",
+            "textarea",
+            "select",
+            "radio",
+            "checkbox",
+            "switch",
+            "button",
+            "submit"
+          ],
+          "description": "Input field type"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the field"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder text (supports {{variables}})"
+        },
+        "defaultValue": {
+          "type": ["string", "number", "boolean"],
+          "description": "Default value (supports {{variables}})"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the field is required"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the field is disabled"
+        },
+        "readonly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the field is read-only"
+        },
+        "min": {
+          "type": ["number", "string"],
+          "description": "Minimum value (for number, date, etc.)"
+        },
+        "max": {
+          "type": ["number", "string"],
+          "description": "Maximum value (for number, date, etc.)"
+        },
+        "step": {
+          "type": "number",
+          "description": "Step increment (for number, range)"
+        },
+        "minLength": {
+          "type": "number",
+          "description": "Minimum length (for text inputs)"
+        },
+        "maxLength": {
+          "type": "number",
+          "description": "Maximum length (for text inputs)"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for validation"
+        },
+        "accept": {
+          "type": "string",
+          "description": "Accepted file types (for file input)",
+          "examples": ["image/*", ".pdf,.doc,.docx", "application/pdf"]
+        },
+        "multiple": {
+          "type": "boolean",
+          "description": "Allow multiple selections (for file, select)"
+        },
+        "options": {
+          "type": "array",
+          "description": "Options for select, radio, checkbox",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": ["string", "number", "boolean"] },
+              "disabled": { "type": "boolean" },
+              "selected": { "type": "boolean" }
+            },
+            "required": ["label", "value"]
+          }
+        },
+        "rows": {
+          "type": "number",
+          "description": "Number of rows (for textarea)",
+          "minimum": 1
+        },
+        "cols": {
+          "type": "number",
+          "description": "Number of columns (for textarea)",
+          "minimum": 1
+        },
+        "autoComplete": {
+          "type": "string",
+          "enum": [
+            "off",
+            "on",
+            "name",
+            "email",
+            "username",
+            "new-password",
+            "current-password",
+            "tel",
+            "street-address",
+            "postal-code",
+            "country",
+            "cc-number",
+            "cc-exp",
+            "cc-csc"
+          ],
+          "description": "Autocomplete attribute"
+        },
+        "className": {
+          "type": "string",
+          "description": "Custom CSS classes"
+        },
+        "style": {
+          "$ref": "#/definitions/FieldStyle"
+        },
+        "validation": {
+          "$ref": "#/definitions/FieldValidation"
+        },
+        "conditional": {
+          "$ref": "#/definitions/ConditionalDisplay"
+        }
+      }
+    },
+    "FieldStyle": {
+      "type": "object",
+      "description": "CSS styles for individual field",
+      "properties": {
+        "width": { "type": "string", "examples": ["100%", "300px", "50vw"] },
+        "height": { "type": "string" },
+        "padding": { "type": "string", "examples": ["10px", "1rem 2rem"] },
+        "margin": { "type": "string" },
+        "fontSize": { "type": "string", "examples": ["16px", "1rem"] },
+        "fontFamily": { "type": "string" },
+        "fontWeight": { "type": ["string", "number"] },
+        "color": { "type": "string", "format": "color" },
+        "backgroundColor": { "type": "string", "format": "color" },
+        "border": { "type": "string", "examples": ["1px solid #ccc"] },
+        "borderRadius": { "type": "string", "examples": ["4px", "0.5rem"] },
+        "boxShadow": { "type": "string" },
+        "outline": { "type": "string" },
+        "display": { "type": "string", "enum": ["block", "inline-block", "flex", "grid", "none"] },
+        "flexDirection": { "type": "string", "enum": ["row", "column"] },
+        "justifyContent": { "type": "string" },
+        "alignItems": { "type": "string" },
+        "gap": { "type": "string" },
+        "gridColumn": { "type": "string" },
+        "gridRow": { "type": "string" },
+        "position": { "type": "string", "enum": ["static", "relative", "absolute", "fixed", "sticky"] },
+        "top": { "type": "string" },
+        "right": { "type": "string" },
+        "bottom": { "type": "string" },
+        "left": { "type": "string" },
+        "zIndex": { "type": "number" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cursor": { "type": "string" },
+        "transition": { "type": "string" },
+        "transform": { "type": "string" }
+      }
+    },
+    "FieldValidation": {
+      "type": "object",
+      "description": "Custom validation rules",
+      "properties": {
+        "custom": {
+          "type": "string",
+          "description": "Custom JavaScript validation function",
+          "examples": ["value.length >= 10", "value.includes('@')"]
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Custom error message"
+        },
+        "validateOn": {
+          "type": "string",
+          "enum": ["blur", "change", "submit"],
+          "default": "submit"
+        }
+      }
+    },
+    "ConditionalDisplay": {
+      "type": "object",
+      "description": "Show/hide field based on conditions",
+      "properties": {
+        "when": {
+          "type": "string",
+          "description": "Field name to watch"
+        },
+        "is": {
+          "type": ["string", "number", "boolean"],
+          "description": "Value to match"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "notEquals", "contains", "greaterThan", "lessThan", "isEmpty", "isNotEmpty"],
+          "default": "equals"
+        }
+      }
+    },
+    "FormStyling": {
+      "type": "object",
+      "description": "Overall form styling",
+      "properties": {
+        "container": {
+          "$ref": "#/definitions/ContainerStyle"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark", "custom"],
+          "default": "light"
+        },
+        "colors": {
+          "$ref": "#/definitions/ColorTheme"
+        },
+        "typography": {
+          "$ref": "#/definitions/Typography"
+        },
+        "spacing": {
+          "$ref": "#/definitions/Spacing"
+        }
+      }
+    },
+    "ContainerStyle": {
+      "type": "object",
+      "properties": {
+        "maxWidth": { "type": "string", "default": "600px" },
+        "width": { "type": "string", "default": "100%" },
+        "padding": { "type": "string", "default": "2rem" },
+        "margin": { "type": "string", "default": "0 auto" },
+        "backgroundColor": { "type": "string", "format": "color" },
+        "border": { "type": "string" },
+        "borderRadius": { "type": "string", "default": "8px" },
+        "boxShadow": { "type": "string" }
+      }
+    },
+    "ColorTheme": {
+      "type": "object",
+      "properties": {
+        "primary": { "type": "string", "format": "color", "default": "#3B82F6" },
+        "secondary": { "type": "string", "format": "color" },
+        "success": { "type": "string", "format": "color", "default": "#10B981" },
+        "error": { "type": "string", "format": "color", "default": "#EF4444" },
+        "warning": { "type": "string", "format": "color", "default": "#F59E0B" },
+        "text": { "type": "string", "format": "color", "default": "#1F2937" },
+        "textSecondary": { "type": "string", "format": "color", "default": "#6B7280" },
+        "background": { "type": "string", "format": "color", "default": "#FFFFFF" },
+        "border": { "type": "string", "format": "color", "default": "#D1D5DB" }
+      }
+    },
+    "Typography": {
+      "type": "object",
+      "properties": {
+        "fontFamily": { "type": "string", "default": "system-ui, -apple-system, sans-serif" },
+        "fontSize": { "type": "string", "default": "16px" },
+        "labelFontSize": { "type": "string", "default": "14px" },
+        "labelFontWeight": { "type": ["string", "number"], "default": "500" },
+        "lineHeight": { "type": ["string", "number"], "default": "1.5" }
+      }
+    },
+    "Spacing": {
+      "type": "object",
+      "properties": {
+        "fieldGap": { "type": "string", "default": "1.5rem", "description": "Space between fields" },
+        "labelMargin": { "type": "string", "default": "0.5rem", "description": "Space between label and input" },
+        "buttonMargin": { "type": "string", "default": "2rem 0 0", "description": "Space around submit button" }
+      }
+    },
+    "FormLayout": {
+      "type": "object",
+      "description": "Form layout configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["vertical", "horizontal", "grid", "inline"],
+          "default": "vertical"
+        },
+        "columns": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 12,
+          "default": 1,
+          "description": "Number of columns (for grid layout)"
+        },
+        "columnGap": {
+          "type": "string",
+          "default": "1rem"
+        },
+        "rowGap": {
+          "type": "string",
+          "default": "1.5rem"
+        },
+        "responsive": {
+          "type": "object",
+          "properties": {
+            "mobile": { "$ref": "#/definitions/ResponsiveLayout" },
+            "tablet": { "$ref": "#/definitions/ResponsiveLayout" },
+            "desktop": { "$ref": "#/definitions/ResponsiveLayout" }
+          }
+        }
+      }
+    },
+    "ResponsiveLayout": {
+      "type": "object",
+      "properties": {
+        "columns": { "type": "number" },
+        "gap": { "type": "string" }
+      }
+    },
+    "FormValidation": {
+      "type": "object",
+      "description": "Form-level validation",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["onSubmit", "onChange", "onBlur"],
+          "default": "onSubmit"
+        },
+        "showErrorsInline": {
+          "type": "boolean",
+          "default": true
+        },
+        "showErrorsSummary": {
+          "type": "boolean",
+          "default": false
+        },
+        "customValidation": {
+          "type": "string",
+          "description": "Custom JavaScript validation function"
+        }
+      }
+    }
+  }
+}

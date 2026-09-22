@@ -1,0 +1,252 @@
+{
+  "id": "chat_trigger",
+  "version": "1.0",
+  "name": "Chat",
+  "description": "Interactive chat trigger that executes workflow for each message and returns responses in real-time.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "circle",
+  "color": "#8B5CF6",
+  "icon": "MessageCircle",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "autoPersist",
+      "displayName": "Auto Persist (SQLite)",
+      "type": "boolean",
+      "default": false,
+      "description": "Persist user messages automatically to SQLite when chatId/sessionId are present. Leave off when using built-in Chat API to avoid duplicates."
+    },
+    {
+      "name": "persistMode",
+      "displayName": "Persist Mode",
+      "type": "options",
+      "default": "auto",
+      "options": [
+        { "value": "auto", "label": "Auto" },
+        { "value": "test", "label": "Test" },
+        { "value": "production", "label": "Production" }
+      ],
+      "description": "Select message mode when auto-persisting (auto derives from metadata.mode).",
+      "displayOptions": {
+        "show": { "autoPersist": [true] }
+      }
+    },
+    {
+      "name": "separatorChatIdentification",
+      "displayName": "Chat Identification",
+      "type": "separator"
+    },
+    {
+      "name": "chatId",
+      "displayName": "Chat ID",
+      "type": "string",
+      "default": "not_generated",
+      "required": true,
+      "description": "The unique ID for this chat. Is generated automatically.",
+      "options": {
+        "readOnly": true
+      }
+    },
+    {
+      "name": "chatName",
+      "displayName": "Chat Name",
+      "type": "string",
+      "default": "My Assistant",
+      "description": "Display name for the chat assistant."
+    },
+    {
+      "name": "separatorChatUI",
+      "displayName": "Chat UI/UX",
+      "type": "separator"
+    },
+    {
+      "name": "welcomeMessage",
+      "displayName": "Welcome Message",
+      "type": "string",
+      "default": "Hello! How can I help you today?",
+      "description": "Initial message shown when chat opens.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "placeholder",
+      "displayName": "Input Placeholder",
+      "type": "string",
+      "default": "Type your message...",
+      "description": "Placeholder text for the message input."
+    },
+    {
+      "name": "theme",
+      "displayName": "Chat Theme",
+      "type": "options",
+      "default": "light",
+      "options": [
+        {
+          "value": "light",
+          "label": "Light"
+        },
+        {
+          "value": "dark",
+          "label": "Dark"
+        },
+        {
+          "value": "auto",
+          "label": "Auto (System)"
+        }
+      ],
+      "description": "Visual theme for the chat interface."
+    },
+    {
+      "name": "primaryColor",
+      "displayName": "Primary Color",
+      "type": "color",
+      "default": "#8B5CF6",
+      "description": "Main color for the chat interface."
+    },
+    {
+      "name": "separatorChatURLs",
+      "displayName": "Chat URLs",
+      "type": "separator"
+    },
+    {
+      "name": "notice",
+      "displayName": "Chat URLs",
+      "type": "notice",
+      "default": "This chat has two modes: Test mode for development (FAB button in editor) and Production mode with a shareable link."
+    },
+    {
+      "name": "testUrl",
+      "displayName": "Test Chat",
+      "type": "inputButton",
+      "description": "Test your chat directly in the workflow editor using the floating chat button.",
+      "behavior": {
+        "action": "info",
+        "value": "Click the chat icon in the bottom-right corner of the editor to test your chat"
+      }
+    },
+    {
+      "name": "prodUrl",
+      "displayName": "Production URL",
+      "type": "inputButton",
+      "description": "Shareable link for production use. Share this with your users.",
+      "behavior": {
+        "action": "copyToClipboard",
+        "value": "{{window.location.origin}}/chat/{{node.config.chatId}}"
+      }
+    },
+    {
+      "name": "separatorHistorySettings",
+      "displayName": "History Settings",
+      "type": "separator"
+    },
+    {
+      "name": "enableHistory",
+      "displayName": "Enable History",
+      "type": "boolean",
+      "default": true,
+      "description": "Store and display conversation history for each session."
+    },
+    {
+      "name": "maxHistoryLength",
+      "displayName": "Max History Length",
+      "type": "number",
+      "default": 50,
+      "description": "Maximum number of messages to keep in history per session.",
+      "displayOptions": {
+        "show": {
+          "enableHistory": [
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "separatorMessageLimit",
+      "displayName": "Message Limit Settings",
+      "type": "separator"
+    },
+    {
+      "name": "enableMessageLimit",
+      "displayName": "Enable Message Limit",
+      "type": "boolean",
+      "default": false,
+      "description": "Enable a maximum number of messages for the chat session."
+    },
+    {
+      "name": "maxMessages",
+      "displayName": "Max Messages",
+      "type": "number",
+      "default": 10,
+      "description": "Maximum number of messages allowed in the chat session.",
+      "displayOptions": {
+        "show": {
+          "enableMessageLimit": [
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "messageLimitExceededAction",
+      "displayName": "Limit Exceeded Action",
+      "type": "options",
+      "default": "auto_restart",
+      "options": [
+        {
+          "value": "auto_restart",
+          "label": "Auto-restart Chat"
+        },
+        {
+          "value": "predefined_response",
+          "label": "Respond with Predefined Message"
+        },
+        {
+          "value": "disable_input",
+          "label": "Disable Input"
+        }
+      ],
+      "description": "Action to take when the message limit is reached.",
+      "displayOptions": {
+        "show": {
+          "enableMessageLimit": [
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "predefinedResponseMessage",
+      "displayName": "Predefined Response",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "You have reached the message limit for this chat. Please restart the conversation or open a new chat.",
+      "description": "Message to send when the limit is exceeded and 'Respond with Predefined Message' is selected.",
+      "displayOptions": {
+        "show": {
+          "messageLimitExceededAction": [
+            "predefined_response"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Chat trigger received message');\nconst message = data.message || '';\nconst sessionId = data.sessionId || 'default';\nconst userId = data.userId || 'anonymous';\nconst timestamp = data.timestamp || new Date().toISOString();\n\nhelpers.log(`Session: ${sessionId}`);\nhelpers.log(`User: ${userId}`);\nhelpers.log(`Message: ${message}`);\n\n// History settings\nconst enableHistory = node.properties.enableHistory?.value !== false;\nconst maxHistoryLength = parseInt(node.properties.maxHistoryLength?.value || 50);\n\n// Merge incoming history (if any) WITHOUT appending current message (the agent añade el mensaje actual)\nlet history = { agent: [], user: [] };\nif (enableHistory) {\n  const incomingHistory = (data && data.history) || {};\n  const userHist = Array.isArray(incomingHistory.user) ? incomingHistory.user : [];\n  const agentHist = Array.isArray(incomingHistory.agent) ? incomingHistory.agent : [];\n  const maxLen = Math.max(userHist.length, agentHist.length);\n  const start = Math.max(0, maxLen - maxHistoryLength);\n  history = {\n    user: userHist.slice(start),\n    agent: agentHist.slice(start)\n  };\n} else {\n  helpers.log('History disabled by configuration');\n}\n\nreturn {\n  message,\n  sessionId,\n  userId,\n  timestamp,\n  chat: {\n    id: node.properties.chatId.value,\n    name: node.properties.chatName.value\n  },\n  history,\n  metadata: data.metadata || {}\n};",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-17",
+    "updatedAt": "2025-10-17"
+  }
+}

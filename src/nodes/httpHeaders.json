@@ -1,0 +1,82 @@
+{
+  "id": "httpHeaders",
+  "version": "1.0",
+  "name": "HTTP Headers",
+  "description": "Configure HTTP headers dynamically for API requests",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#3B82F6",
+  "icon": "Globe",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "headers",
+      "displayName": "HTTP Headers",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Header",
+      "description": "Define HTTP headers to include in the request. Common headers: Content-Type, Authorization, Accept, User-Agent.",
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "key",
+            "displayName": "Header Name",
+            "type": "string",
+            "required": true,
+            "placeholder": "Content-Type",
+            "description": "The name of the HTTP header (e.g., Content-Type, Authorization)"
+          },
+          {
+            "name": "value",
+            "displayName": "Header Value",
+            "type": "string",
+            "required": true,
+            "placeholder": "application/json",
+            "description": "The value for this header. Can use {{data.field}} to reference input data",
+            "ui": {
+              "component": "code"
+            }
+          },
+          {
+            "name": "enabled",
+            "displayName": "Enabled",
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to include this header in the request"
+          }
+        ]
+      }
+    },
+    {
+      "name": "includeDefaults",
+      "displayName": "Include Default Headers",
+      "type": "boolean",
+      "default": true,
+      "description": "Include common default headers (User-Agent, Accept)"
+    }
+  ],
+  "executionCode": "helpers.log('Starting HTTP Headers node execution');\n\nconst headers = node.properties.headers.value || [];\nconst includeDefaults = node.properties.includeDefaults.value;\n\nhelpers.log(`Processing ${headers.length} custom header(s)`);\nhelpers.log(`Include defaults: ${includeDefaults}`);\n\nconst outputHeaders = {};\n\n// Add default headers if enabled\nif (includeDefaults) {\n  outputHeaders['User-Agent'] = 'Nodify/1.0';\n  outputHeaders['Accept'] = '*/*';\n  helpers.log('Added default headers');\n}\n\n// Process custom headers\nfor (const header of headers) {\n  if (!header.enabled) {\n    helpers.log(`Skipping disabled header: ${header.key}`);\n    continue;\n  }\n\n  if (!header.key || !header.value) {\n    helpers.warn('Skipping header with missing key or value');\n    continue;\n  }\n\n  const key = String(header.key).trim();\n  const value = String(header.value).trim();\n\n  outputHeaders[key] = value;\n  helpers.log(`Set header: ${key} = ${value}`);\n}\n\nhelpers.log(`Total headers configured: ${Object.keys(outputHeaders).length}`);\n\nreturn {\n  ...data,\n  headers: outputHeaders,\n  headerCount: Object.keys(outputHeaders).length\n};",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-25"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "google_drive_create_file",
+  "version": "1.0",
+  "name": "Google Drive Create File",
+  "description": "Create a file (metadata-only) in Google Drive using OAuth2 access token.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#1A73E8",
+  "icon": "FilePlus",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [ { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }, { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 } ],
+  "properties": [
+    { "name": "credentials", "displayName": "OAuth2 Credentials", "type": "credentials", "typeOptions": { "credentialType": "oauth2" }, "required": true },
+    { "name": "name", "displayName": "File Name", "type": "string", "required": true, "default": "new-file.txt" },
+    { "name": "mimeType", "displayName": "MIME Type", "type": "string", "default": "text/plain" },
+    { "name": "parents", "displayName": "Parent Folder IDs (JSON)", "type": "json", "ui": { "component": "textarea" }, "default": "[]" }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const name = node.properties.name?.value;\n  const mimeType = node.properties.mimeType?.value || 'text/plain';\n  let parents = node.properties.parents?.value; if (typeof parents === 'string') { try { parents = JSON.parse(parents || '[]'); } catch { parents = []; } }\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!name) return { path: 'error', error: 'name is required' };\n\n  let accessToken = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); accessToken = cred?.accessToken || null; }\n  if (!accessToken && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); accessToken = d?.data?.accessToken || null; } }\n  if (!accessToken && env?.GOOGLE_ACCESS_TOKEN) accessToken = env.GOOGLE_ACCESS_TOKEN;\n  if (!accessToken) return { path: 'error', error: 'No OAuth2 access token provided' };\n\n  const res = await fetch('https://www.googleapis.com/drive/v3/files', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` }, body: JSON.stringify({ name, mimeType, parents: Array.isArray(parents) ? parents : [] }) });\n  const result = await res.json();\n  if (!res.ok) return { path: 'error', error: result.error?.message || 'Google Drive API error', status: res.status, details: result };\n  return { success: true, id: result.id, name: result.name, mimeType: result.mimeType, raw: result };\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

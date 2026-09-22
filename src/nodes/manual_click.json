@@ -1,0 +1,28 @@
+{
+  "id": "manual_trigger",
+  "version": "1.0",
+  "name": "Manual Trigger",
+  "description": "Start the workflow manually by clicking the execute button.",
+  "group": "Triggers",
+  "category": "trigger",
+  "executionEnvironment": "client",
+  "shape": "2x2",
+  "color": "#F59E0B",
+  "icon": "PlayCircle",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [],
+  "executionCode": "return { event: 'manualStart', message: 'Workflow started manually', time: new Date().toISOString() };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

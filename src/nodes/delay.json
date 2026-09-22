@@ -1,0 +1,43 @@
+{
+  "id": "delay_node",
+  "version": "1.0",
+  "name": "Delay",
+  "description": "Delay the passing of data to the next node.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#F97316",
+  "icon": "Clock4",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "delayMs",
+      "displayName": "Delay (ms)",
+      "type": "number",
+      "default": 1000
+    }
+  ],
+  "executionCode": "helpers.log('Starting Delay node');\nconst delayMs = node.properties.delayMs.value;\nhelpers.log(`Delaying execution for ${delayMs}ms (${(delayMs / 1000).toFixed(2)}s)`);\nconst startTime = Date.now();\nawait new Promise(res => setTimeout(res, delayMs));\nconst elapsed = Date.now() - startTime;\nhelpers.log(`Delay completed (actual: ${elapsed}ms)`);\nreturn data;",
+  "dynamicCode": {},
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

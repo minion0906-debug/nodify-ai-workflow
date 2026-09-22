@@ -1,0 +1,261 @@
+{
+  "id": "pdf_generator_node",
+  "version": "1.0",
+  "name": "PDF Generator",
+  "description": "Generate PDF documents from HTML, templates, or raw content with customizable formatting.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#EF4444",
+  "icon": "FileText",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "mode",
+      "displayName": "Generation Mode",
+      "type": "options",
+      "default": "html",
+      "required": true,
+      "options": [
+        {
+          "id": "mode-html",
+          "label": "From HTML",
+          "value": "html"
+        },
+        {
+          "id": "mode-text",
+          "label": "Simple Text",
+          "value": "text"
+        },
+        {
+          "id": "mode-template",
+          "label": "From Template",
+          "value": "template"
+        }
+      ]
+    },
+    {
+      "name": "content",
+      "displayName": "Content",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "required": true,
+      "description": "HTML content, text, or template data"
+    },
+    {
+      "name": "outputPath",
+      "displayName": "Output File Path",
+      "type": "string",
+      "required": true,
+      "placeholder": "./output/document.pdf",
+      "description": "Path where the PDF will be saved"
+    },
+    {
+      "name": "pageSize",
+      "displayName": "Page Size",
+      "type": "options",
+      "default": "A4",
+      "options": [
+        {
+          "id": "size-a4",
+          "label": "A4 (210 x 297 mm)",
+          "value": "A4"
+        },
+        {
+          "id": "size-letter",
+          "label": "Letter (8.5 x 11 in)",
+          "value": "Letter"
+        },
+        {
+          "id": "size-legal",
+          "label": "Legal (8.5 x 14 in)",
+          "value": "Legal"
+        },
+        {
+          "id": "size-a3",
+          "label": "A3 (297 x 420 mm)",
+          "value": "A3"
+        }
+      ]
+    },
+    {
+      "name": "orientation",
+      "displayName": "Orientation",
+      "type": "options",
+      "default": "portrait",
+      "options": [
+        {
+          "id": "orient-portrait",
+          "label": "Portrait",
+          "value": "portrait"
+        },
+        {
+          "id": "orient-landscape",
+          "label": "Landscape",
+          "value": "landscape"
+        }
+      ]
+    },
+    {
+      "name": "marginTop",
+      "displayName": "Margin Top (mm)",
+      "type": "number",
+      "default": 20,
+      "description": "Top margin in millimeters"
+    },
+    {
+      "name": "marginBottom",
+      "displayName": "Margin Bottom (mm)",
+      "type": "number",
+      "default": 20,
+      "description": "Bottom margin in millimeters"
+    },
+    {
+      "name": "marginLeft",
+      "displayName": "Margin Left (mm)",
+      "type": "number",
+      "default": 20,
+      "description": "Left margin in millimeters"
+    },
+    {
+      "name": "marginRight",
+      "displayName": "Margin Right (mm)",
+      "type": "number",
+      "default": 20,
+      "description": "Right margin in millimeters"
+    },
+    {
+      "name": "header",
+      "displayName": "Header HTML",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "placeholder": "<div style='text-align: center'>My Document</div>",
+      "description": "HTML for page header (optional)",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "html",
+            "template"
+          ]
+        }
+      }
+    },
+    {
+      "name": "footer",
+      "displayName": "Footer HTML",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "placeholder": "<div style='text-align: center'>Page {page} of {pages}</div>",
+      "description": "HTML for page footer (optional)",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "html",
+            "template"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fontSize",
+      "displayName": "Font Size",
+      "type": "number",
+      "default": 12,
+      "description": "Default font size in points",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fontFamily",
+      "displayName": "Font Family",
+      "type": "options",
+      "default": "Helvetica",
+      "options": [
+        {
+          "id": "font-helvetica",
+          "label": "Helvetica",
+          "value": "Helvetica"
+        },
+        {
+          "id": "font-times",
+          "label": "Times New Roman",
+          "value": "Times-Roman"
+        },
+        {
+          "id": "font-courier",
+          "label": "Courier",
+          "value": "Courier"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "name": "title",
+      "displayName": "Document Title",
+      "type": "string",
+      "description": "PDF metadata title"
+    },
+    {
+      "name": "author",
+      "displayName": "Document Author",
+      "type": "string",
+      "description": "PDF metadata author"
+    },
+    {
+      "name": "returnBuffer",
+      "displayName": "Return as Buffer",
+      "type": "boolean",
+      "default": false,
+      "description": "Return PDF as buffer instead of saving to file"
+    }
+  ],
+  "executionCode": "const mode = node.properties.mode.value;\nlet content = node.properties.content.value;\nconst outputPath = node.properties.outputPath.value;\nconst pageSize = node.properties.pageSize?.value || 'A4';\nconst orientation = node.properties.orientation?.value || 'portrait';\nconst marginTop = node.properties.marginTop?.value || 20;\nconst marginBottom = node.properties.marginBottom?.value || 20;\nconst marginLeft = node.properties.marginLeft?.value || 20;\nconst marginRight = node.properties.marginRight?.value || 20;\nconst header = node.properties.header?.value;\nconst footer = node.properties.footer?.value;\nconst fontSize = node.properties.fontSize?.value || 12;\nconst fontFamily = node.properties.fontFamily?.value || 'Helvetica';\nconst title = node.properties.title?.value;\nconst author = node.properties.author?.value;\nconst returnBuffer = node.properties.returnBuffer?.value === true;\n\n// Resolve template variables\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') {\n      return typeof data === 'string' ? data : JSON.stringify(data, null, 2);\n    }\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const path = match[1].split('.');\n        let result = data;\n        for (const part of path) {\n          result = result?.[part];\n        }\n        return result !== undefined ? String(result) : val;\n      }\n    }\n  }\n  return val;\n};\n\ncontent = resolveValue(content);\n\nif (!content) {\n  return {\n    path: 'error',\n    error: 'Content is required'\n  };\n}\n\nif (!outputPath && !returnBuffer) {\n  return {\n    path: 'error',\n    error: 'Output path is required (or enable returnBuffer)'\n  };\n}\n\nhelpers.log(`PDF Generator: ${mode} mode, output: ${outputPath || 'buffer'}`);\n\n// Note: This is a template implementation\n// In production, install PDF library:\n// - For HTML to PDF: npm install puppeteer\n// - For programmatic PDF: npm install pdfkit\n\ntry {\n  // Example using Puppeteer for HTML mode:\n  // const puppeteer = require('puppeteer');\n  // const browser = await puppeteer.launch({ headless: true });\n  // const page = await browser.newPage();\n  // await page.setContent(content, { waitUntil: 'networkidle0' });\n  // const pdfBuffer = await page.pdf({\n  //   format: pageSize,\n  //   landscape: orientation === 'landscape',\n  //   margin: {\n  //     top: `${marginTop}mm`,\n  //     bottom: `${marginBottom}mm`,\n  //     left: `${marginLeft}mm`,\n  //     right: `${marginRight}mm`\n  //   },\n  //   displayHeaderFooter: !!(header || footer),\n  //   headerTemplate: header || '',\n  //   footerTemplate: footer || '',\n  //   printBackground: true\n  // });\n  // await browser.close();\n  // if (returnBuffer) {\n  //   return { success: true, buffer: pdfBuffer, size: pdfBuffer.length };\n  // }\n  // modules.fs.writeFileSync(outputPath, pdfBuffer);\n  \n  // Example using PDFKit for text/programmatic mode:\n  // const PDFDocument = require('pdfkit');\n  // const doc = new PDFDocument({\n  //   size: pageSize,\n  //   layout: orientation,\n  //   margin: 50\n  // });\n  // if (title) doc.info.Title = title;\n  // if (author) doc.info.Author = author;\n  // doc.fontSize(fontSize);\n  // doc.font(fontFamily);\n  // doc.text(content, marginLeft, marginTop);\n  // if (returnBuffer) {\n  //   const buffers = [];\n  //   doc.on('data', buffers.push.bind(buffers));\n  //   doc.on('end', () => {\n  //     const pdfBuffer = Buffer.concat(buffers);\n  //     return { success: true, buffer: pdfBuffer, size: pdfBuffer.length };\n  //   });\n  // } else {\n  //   doc.pipe(modules.fs.createWriteStream(outputPath));\n  // }\n  // doc.end();\n  \n  switch (mode) {\n    case 'html': {\n      helpers.log('HTML to PDF conversion (simulated)');\n      helpers.log(`Content length: ${content.length} characters`);\n      helpers.log(`Settings: ${pageSize} ${orientation}, margins: ${marginTop}mm`);\n      \n      return {\n        success: true,\n        mode: 'html',\n        message: 'PDF generation simulated. Install puppeteer for production use.',\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          pageSize,\n          orientation,\n          margins: { top: marginTop, bottom: marginBottom, left: marginLeft, right: marginRight },\n          header: !!header,\n          footer: !!footer\n        },\n        note: 'Install: npm install puppeteer',\n        contentPreview: content.substring(0, 200) + (content.length > 200 ? '...' : '')\n      };\n    }\n    \n    case 'text': {\n      helpers.log('Text to PDF conversion (simulated)');\n      helpers.log(`Content length: ${content.length} characters`);\n      \n      return {\n        success: true,\n        mode: 'text',\n        message: 'PDF generation simulated. Install pdfkit for production use.',\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          pageSize,\n          orientation,\n          fontSize,\n          fontFamily,\n          title,\n          author\n        },\n        note: 'Install: npm install pdfkit',\n        contentPreview: content.substring(0, 200) + (content.length > 200 ? '...' : '')\n      };\n    }\n    \n    case 'template': {\n      helpers.log('Template to PDF conversion (simulated)');\n      \n      // In production, you might combine a template engine with PDF generation:\n      // const handlebars = require('handlebars');\n      // const template = handlebars.compile(content);\n      // const html = template(data);\n      // Then convert html to PDF using puppeteer\n      \n      return {\n        success: true,\n        mode: 'template',\n        message: 'Template PDF generation simulated. Install handlebars + puppeteer for production use.',\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          pageSize,\n          orientation,\n          header: !!header,\n          footer: !!footer\n        },\n        note: 'Install: npm install handlebars puppeteer',\n        templatePreview: content.substring(0, 200) + (content.length > 200 ? '...' : '')\n      };\n    }\n    \n    default:\n      return {\n        path: 'error',\n        error: `Unknown mode: ${mode}`\n      };\n  }\n} catch (error) {\n  helpers.error('PDF generation failed:', error);\n  return {\n    path: 'error',\n    error: error.message,\n    details: error.stack\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Template implementation. Install puppeteer (HTML) or pdfkit (programmatic) for production use"
+  }
+}

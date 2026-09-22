@@ -1,0 +1,24 @@
+{
+  "id": "stripe_create_payment_intent",
+  "version": "1.0",
+  "name": "Stripe Create Payment Intent",
+  "description": "Create a Stripe Payment Intent.",
+  "group": "Payments",
+  "category": "action",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#635BFF",
+  "icon": "CreditCard",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [ { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }, { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 } ],
+  "properties": [
+    { "name": "credentials", "displayName": "Stripe Credentials", "type": "credentials", "typeOptions": { "credentialType": "stripe" }, "required": true },
+    { "name": "amount", "displayName": "Amount (cents)", "type": "number", "required": true, "default": 100 },
+    { "name": "currency", "displayName": "Currency", "type": "string", "default": "usd" },
+    { "name": "description", "displayName": "Description", "type": "string", "default": "" },
+    { "name": "metadata", "displayName": "Metadata (JSON)", "type": "json", "ui": { "component": "textarea" }, "default": "{}" }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const amount = node.properties.amount?.value;\n  const currency = node.properties.currency?.value || 'usd';\n  const description = node.properties.description?.value || '';\n  let metadata = node.properties.metadata?.value; if (typeof metadata === 'string') { try { metadata = JSON.parse(metadata || '{}'); } catch { metadata = {}; } }\n\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!amount || amount <= 0) return { path: 'error', error: 'Amount must be > 0' };\n\n  let secretKey = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); secretKey = cred?.secretKey || cred?.apiKey || null; }\n  if (!secretKey && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); secretKey = d?.data?.secretKey || d?.data?.apiKey || null; } }\n  if (!secretKey && env?.STRIPE_SECRET_KEY) secretKey = env.STRIPE_SECRET_KEY;\n  if (!secretKey) return { path: 'error', error: 'No Stripe secret key provided' };\n\n  const params = new URLSearchParams(); params.append('amount', String(amount)); params.append('currency', currency); if (description) params.append('description', description);\n  if (metadata && typeof metadata === 'object') { for (const k of Object.keys(metadata)) { if (metadata[k] != null) params.append(`metadata[${k}]`, String(metadata[k])); } }\n  const res = await fetch('https://api.stripe.com/v1/payment_intents', { method: 'POST', headers: { 'Authorization': `Bearer ${secretKey}` }, body: params });\n  const result = await res.json();\n  if (!res.ok) return { path: 'error', error: result.error?.message || 'Stripe API error', status: res.status, details: result };\n  return { success: true, id: result.id, client_secret: result.client_secret, status: result.status, raw: result };\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

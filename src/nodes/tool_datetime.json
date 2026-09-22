@@ -1,0 +1,52 @@
+{
+  "id": "tool_datetime",
+  "version": "1.0",
+  "name": "DateTime Tool",
+  "description": "Tool for AI Agent to get current date and time in various formats",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Clock",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "get_datetime",
+      "required": true
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Get current date and time in various formats. Returns ISO string, Unix timestamp, and formatted date.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "return {\n  name: node.properties.toolName?.value || 'get_datetime',\n  description: node.properties.toolDescription?.value || 'Get current date/time',\n  enabled: node.properties.enabled?.value !== false,\n  schema: {\n    type: 'object',\n    properties: {\n      timezone: {\n        type: 'string',\n        description: 'Timezone (e.g., \"America/New_York\", \"Europe/London\", default: \"UTC\")'\n      },\n      format: {\n        type: 'string',\n        description: 'Date format (\"ISO\", \"locale\", or custom format)'\n      }\n    }\n  },\n  code: `const now = new Date();\nconst timezone = args.timezone || 'UTC';\nconst format = args.format || 'ISO';\nconst result = {\n  iso: now.toISOString(),\n  unix: Math.floor(now.getTime() / 1000),\n  timestamp: now.getTime(),\n  timezone\n};\nif (format !== 'ISO') {\n  const formatter = new Intl.DateTimeFormat('en-US', {\n    timeZone: timezone,\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n    hour: '2-digit',\n    minute: '2-digit',\n    second: '2-digit',\n    hour12: false\n  });\n  result.formatted = formatter.format(now);\n} else {\n  result.formatted = now.toISOString();\n}\nreturn result;`\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

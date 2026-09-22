@@ -1,0 +1,100 @@
+{
+  "id": "ai_text_generation",
+  "version": "1.0",
+  "name": "AI Text Generation",
+  "description": "Generate text responses using OpenAI or compatible API.",
+  "group": "AI",
+  "category": "ai",
+  "shape": "3x2",
+  "color": "#9333EA",
+  "icon": "Brain",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    },
+    {
+      "id": "model",
+      "label": "Model",
+      "position": "top",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "credentials",
+      "options": [ { "value": "credentials", "label": "Use Credentials" }, { "value": "manual", "label": "Manual API Key" } ]
+    },
+    {
+      "name": "provider",
+      "displayName": "AI Provider",
+      "type": "options",
+      "default": "openai",
+      "options": [
+        {
+          "value": "openai",
+          "label": "OpenAI"
+        }
+      ]
+    },
+    {
+      "name": "credentials",
+      "displayName": "OpenAI Credentials",
+      "type": "credentials",
+      "placeholder": "Select OpenAI credentials...",
+      "typeOptions": { "credentialType": "openAi" },
+      "displayOptions": { "show": { "authentication": ["credentials"] } }
+    },
+    {
+      "name": "apiKey",
+      "displayName": "API Key",
+      "type": "string",
+      "placeholder": "sk-...",
+      "displayOptions": { "show": { "authentication": ["manual"] } }
+    },
+    {
+      "name": "model",
+      "displayName": "Model",
+      "type": "string",
+      "default": "gpt-4o-mini"
+    },
+    {
+      "name": "prompt",
+      "displayName": "Prompt",
+      "type": "string",
+      "default": "Summarize this data: {{JSON.stringify(data)}}"
+    },
+    {
+      "name": "temperature",
+      "displayName": "Creativity",
+      "type": "number",
+      "ui": {
+        "component": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.1
+      },
+      "default": 0.7
+    }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const auth = node.properties.authentication?.value || 'credentials';\n  const credentialId = node.properties.credentials?.value;\n  const manualKey = node.properties.apiKey?.value;\n  const model = node.properties.model?.value || 'gpt-4o-mini';\n  const prompt = node.properties.prompt?.value || '';\n  const temperature = node.properties.temperature?.value ?? 0.7;\n\n  let apiKey = null;\n  if (auth === 'credentials' && credentialId) {\n    if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); apiKey = cred?.apiKey || null; }\n    if (!apiKey && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); apiKey = d?.data?.apiKey || null; } }\n    if (!apiKey && env?.OPENAI_API_KEY) apiKey = env.OPENAI_API_KEY;\n  } else if (auth === 'manual') { apiKey = manualKey; }\n  if (!apiKey) return { error: 'No API key provided' };\n\n  const res = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature }) });\n  const json = await res.json();\n  if (!res.ok) return { error: json.error?.message || 'OpenAI API error', status: res.status, details: json };\n  return { output: json.choices?.[0]?.message?.content || '' };\n} catch (e) { return { error: e.message, stack: e.stack }; }\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

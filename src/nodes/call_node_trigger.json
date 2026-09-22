@@ -1,0 +1,65 @@
+{
+  "id": "call_node_trigger",
+  "version": "1.0",
+  "name": "Call Node Trigger",
+  "description": "Executes a workflow starting from a specific 'Node Trigger'. Useful for creating sub-workflows and reusable logic flows.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "3x1",
+  "color": "#9333EA",
+  "icon": "Play",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "targetNodeId",
+      "displayName": "Target Node Trigger",
+      "type": "nodeSelector",
+      "default": "",
+      "placeholder": "Select a Node Trigger...",
+      "description": "The Node Trigger to execute when this node runs.",
+      "typeOptions": {
+        "filters": {
+          "category": "trigger"          
+        }
+      }
+    },
+    {
+      "name": "passData",
+      "displayName": "Pass Input Data",
+      "type": "boolean",
+      "default": true,
+      "description": "If enabled, passes the input data to the Node Trigger. Otherwise, starts with empty data."
+    },
+    {
+      "name": "waitForCompletion",
+      "displayName": "Wait for Completion",
+      "type": "boolean",
+      "default": true,
+      "description": "If enabled, waits for the triggered workflow to complete before continuing."
+    }
+  ],
+  "executionCode": "try {\n  const targetNodeId = node.properties.targetNodeId?.value;\n  const passData = node.properties.passData?.value !== false;\n  const waitForCompletion = node.properties.waitForCompletion?.value !== false;\n  \n  if (!targetNodeId || targetNodeId.trim() === '') {\n    helpers.error('No target Node Trigger ID specified');\n    return { error: 'No target Node Trigger ID specified' };\n  }\n  \n  helpers.log(`Calling Node Trigger with ID: ${targetNodeId}`);\n  \n  // Check if the helper is available\n  if (!helpers.executeFromNode) {\n    helpers.error('executeFromNode helper not available. Make sure you are using the latest workflow engine.');\n    return { error: 'executeFromNode helper not available' };\n  }\n  \n  // Prepare the data to pass to the trigger\n  const inputData = passData ? data : {};\n  helpers.log('Passing data:', JSON.stringify(inputData));\n  \n  // Execute the workflow from the target node\n  if (waitForCompletion) {\n    helpers.log('Executing and waiting for completion...');\n    const result = await helpers.executeFromNode(targetNodeId, inputData);\n    helpers.log('Execution completed. Result:', JSON.stringify(result));\n    return result;\n  } else {\n    helpers.log('Executing without waiting (fire and forget)...');\n    // Fire and forget - don't wait for result\n    helpers.executeFromNode(targetNodeId, inputData).catch(err => {\n      helpers.warn('Background execution error:', err.message);\n    });\n    return { triggered: true, targetNodeId, async: true };\n  }\n  \n} catch (error) {\n  helpers.error('Call Node Trigger failed:', error.message);\n  helpers.error('Stack trace:', error.stack);\n  return {\n    error: 'Call Node Trigger failed',\n    message: error.message\n  };\n}",
+  "executionEnvironment": "client",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-19",
+    "updatedAt": "2025-10-19"
+  }
+}

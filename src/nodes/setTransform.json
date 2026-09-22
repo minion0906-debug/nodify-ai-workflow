@@ -1,0 +1,75 @@
+{
+  "id": "setTransform",
+  "version": "1.0",
+  "name": "Set/Transform",
+  "description": "Set or transform data fields",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#1ABC9C",
+  "icon": "ArrowRightLeft",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "keepOnlySet",
+      "displayName": "Keep Only Set",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, only the fields you set below will be in the output. All other fields from input data will be removed."
+    },
+    {
+      "name": "values",
+      "displayName": "Values to Set",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Field",
+      "description": "Define the fields you want to set or transform. Use {{data.fieldName}} to reference input data.",
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "name",
+            "displayName": "Field Name",
+            "type": "string",
+            "required": true,
+            "placeholder": "fieldName",
+            "description": "Name of the field to set (supports dot notation for nested fields, e.g., 'user.name')"
+          },
+          {
+            "name": "value",
+            "displayName": "Value",
+            "type": "string",
+            "required": false,
+            "placeholder": "{{data.someValue}}",
+            "description": "Value to set. Can be static text, numbers, or use {{data.field}} to reference input data",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Starting Set/Transform node execution');\n\nconst keepOnlySet = node.properties.keepOnlySet.value;\nlet valuesToSet = node.properties.values.value;\n\nhelpers.log(`Keep only set fields: ${keepOnlySet}`);\nhelpers.log(`Input data: ${JSON.stringify(data)}`);\n\n// Parse values if it's a string\nif (typeof valuesToSet === 'string' && valuesToSet.trim()) {\n  try {\n    valuesToSet = JSON.parse(valuesToSet);\n    helpers.log(`Parsed values configuration: ${JSON.stringify(valuesToSet)}`);\n  } catch (e) {\n    helpers.error(`Failed to parse values JSON: ${e.message}`);\n    return { error: 'Invalid JSON format for values to set', details: e.message };\n  }\n}\n\n// Validate that valuesToSet is an array\nif (!Array.isArray(valuesToSet)) {\n  helpers.error('Values to set must be an array of {name, value} objects');\n  return { error: 'Values to set must be an array' };\n}\n\n// Start with empty object if keepOnlySet is true, otherwise copy input data\nconst outputData = keepOnlySet ? {} : { ...data };\n\nhelpers.log(`Processing ${valuesToSet.length} field(s) to set/transform`);\n\n// Set/transform each value\nfor (const item of valuesToSet) {\n  if (!item.name) {\n    helpers.warn('Skipping item without name property');\n    continue;\n  }\n\n  const fieldName = String(item.name).trim();\n  let fieldValue = item.value;\n\n  // If value is undefined, set it to null\n  if (fieldValue === undefined) {\n    fieldValue = null;\n  }\n\n  helpers.log(`Setting field '${fieldName}' = ${JSON.stringify(fieldValue)}`);\n  \n  // Support nested field paths (e.g., \"user.name\")\n  if (fieldName.includes('.')) {\n    const parts = fieldName.split('.');\n    let current = outputData;\n    \n    for (let i = 0; i < parts.length - 1; i++) {\n      const part = parts[i];\n      if (!current[part] || typeof current[part] !== 'object') {\n        current[part] = {};\n      }\n      current = current[part];\n    }\n    \n    current[parts[parts.length - 1]] = fieldValue;\n  } else {\n    outputData[fieldName] = fieldValue;\n  }\n}\n\nhelpers.log(`Output data: ${JSON.stringify(outputData)}`);\nhelpers.log('Set/Transform node execution completed successfully');\n\nreturn outputData;",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

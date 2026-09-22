@@ -1,0 +1,49 @@
+{
+  "id": "webhook_response",
+  "version": "1.0",
+  "name": "Webhook Response",
+  "description": "Send a custom response back to a Webhook request.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "2x2",
+  "color": "#A855F7",
+  "icon": "Reply",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [],
+  "properties": [
+    {
+      "name": "statusCode",
+      "displayName": "Status Code",
+      "type": "number",
+      "default": 200
+    },
+    {
+      "name": "body",
+      "displayName": "Response Body (JSON)",
+      "type": "json",
+      "default": "{ \"message\": \"OK\" }"
+    },
+    {
+      "name": "headers",
+      "displayName": "Custom Headers",
+      "type": "json",
+      "default": "{ \"Content-Type\": \"application/json\" }"
+    }
+  ],
+  "executionCode": "// Note: Webhook responses are sent immediately (202 Accepted) to prevent timeouts.\n// This node logs the desired response but doesn't actually send it.\nconst res = {\n  status: node.properties.statusCode.value,\n  headers: JSON.parse(node.properties.headers.value || '{}'),\n  body: JSON.parse(node.properties.body.value || '{}')\n};\n\nconsole.log('[Webhook Response] Desired response (not sent, webhook already responded):', res);\n\n// TODO: In future, implement async callback mechanism to send custom responses\nreturn { note: 'Webhook already responded with 202 Accepted', desiredResponse: res };",
+  "dynamicCode": {
+    "onConnect": "// If connected after a Webhook node, auto-link request context\nreturn linkWebhookContext(node.id);"
+  },
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

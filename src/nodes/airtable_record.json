@@ -1,0 +1,25 @@
+{
+  "id": "airtable_record",
+  "version": "1.0",
+  "name": "Airtable Record",
+  "description": "Create, retrieve, update, or delete a record in Airtable.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#18BFFF",
+  "icon": "Table",
+  "inputs": [ { "id": "main", "label": "Input", "position": "left", "type": "any", "slot": 1 } ],
+  "outputs": [ { "id": "main", "label": "Output", "position": "right", "type": "json", "slot": 1 }, { "id": "error", "label": "Error", "position": "right", "type": "any", "slot": 2 } ],
+  "properties": [
+    { "name": "credentials", "displayName": "Airtable Credentials", "type": "credentials", "typeOptions": { "credentialType": "airtable" }, "required": true },
+    { "name": "baseId", "displayName": "Base ID", "type": "string", "required": true, "placeholder": "appXXXXXXXXXXXXXX" },
+    { "name": "table", "displayName": "Table", "type": "string", "required": true },
+    { "name": "operation", "displayName": "Operation", "type": "options", "default": "create", "options": [ { "value": "create", "label": "Create" }, { "value": "retrieve", "label": "Retrieve" }, { "value": "update", "label": "Update" }, { "value": "delete", "label": "Delete" } ] },
+    { "name": "recordId", "displayName": "Record ID", "type": "string", "displayOptions": { "show": { "operation": ["retrieve", "update", "delete"] } } },
+    { "name": "fields", "displayName": "Fields (JSON)", "type": "json", "ui": { "component": "textarea" }, "default": "{}", "displayOptions": { "show": { "operation": ["create", "update"] } } }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const credentialId = node.properties.credentials?.value;\n  const baseId = node.properties.baseId?.value;\n  const table = node.properties.table?.value;\n  const operation = node.properties.operation?.value || 'create';\n  const recordId = node.properties.recordId?.value;\n  let fields = node.properties.fields?.value; if (typeof fields === 'string') { try { fields = JSON.parse(fields || '{}'); } catch { fields = {}; } }\n  if (!credentialId) return { path: 'error', error: 'Credential is required' };\n  if (!baseId || !table) return { path: 'error', error: 'baseId and table are required' };\n\n  let apiKey = null;\n  if (typeof helpers.getCredentialData === 'function') { const cred = await helpers.getCredentialData(credentialId); apiKey = cred?.apiKey || null; }\n  if (!apiKey && services) { const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId)); if (snap.exists()) { const d = snap.data(); apiKey = d?.data?.apiKey || null; } }\n  if (!apiKey && env?.AIRTABLE_API_KEY) apiKey = env.AIRTABLE_API_KEY;\n  if (!apiKey) return { path: 'error', error: 'No Airtable API key provided' };\n\n  const baseUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`;\n  if (operation === 'create') {\n    const res = await fetch(baseUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ fields }) }); const result = await res.json(); if (!res.ok) return { path: 'error', error: result.error?.message || 'Airtable API error', status: res.status, details: result }; return { success: true, id: result.id, fields: result.fields, raw: result };\n  } else if (operation === 'retrieve') {\n    if (!recordId) return { path: 'error', error: 'recordId is required' }; const res = await fetch(`${baseUrl}/${recordId}`, { headers: { 'Authorization': `Bearer ${apiKey}` } }); const result = await res.json(); if (!res.ok) return { path: 'error', error: result.error?.message || 'Airtable API error', status: res.status, details: result }; return { success: true, id: result.id, fields: result.fields, raw: result };\n  } else if (operation === 'update') {\n    if (!recordId) return { path: 'error', error: 'recordId is required' }; const res = await fetch(`${baseUrl}/${recordId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ fields }) }); const result = await res.json(); if (!res.ok) return { path: 'error', error: result.error?.message || 'Airtable API error', status: res.status, details: result }; return { success: true, id: result.id, fields: result.fields, raw: result };\n  } else if (operation === 'delete') {\n    if (!recordId) return { path: 'error', error: 'recordId is required' }; const res = await fetch(`${baseUrl}/${recordId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${apiKey}` } }); const result = await res.json(); if (!res.ok) return { path: 'error', error: result.error?.message || 'Airtable API error', status: res.status, details: result }; return { success: true, deleted: result.deleted, id: result.id };\n  } else { return { path: 'error', error: `Unknown operation: ${operation}` }; }\n} catch (e) { return { path: 'error', error: e.message, stack: e.stack }; }\n",
+  "meta": { "author": "Nodify System", "createdAt": "2025-10-22" }
+}
+

@@ -1,0 +1,90 @@
+{
+  "id": "file_handler",
+  "version": "1.0",
+  "name": "File Handler",
+  "description": "Work with downloaded files - download to device, get metadata, or convert to different formats.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#7C3AED",
+  "icon": "Download",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "File Data",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "download",
+      "options": [
+        {
+          "value": "download",
+          "label": "Download to Device"
+        },
+        {
+          "value": "metadata",
+          "label": "Get Metadata"
+        },
+        {
+          "value": "base64",
+          "label": "Convert to Base64"
+        },
+        {
+          "value": "dataUrl",
+          "label": "Get Data URL"
+        }
+      ],
+      "description": "What to do with the file"
+    },
+    {
+      "name": "fileId",
+      "displayName": "File ID (Optional)",
+      "type": "string",
+      "default": "",
+      "placeholder": "e.g. {{data.file.id}} or leave empty",
+      "ui": {
+        "component": "code"
+      },
+      "description": "The file ID from a previous node. If empty, it will try to find it in the input data."
+    },
+    {
+      "name": "filename",
+      "displayName": "Custom Filename",
+      "type": "string",
+      "default": "",
+      "placeholder": "Leave empty to use original filename",
+      "ui": {
+        "component": "code"
+      },
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "download"
+          ]
+        }
+      },
+      "description": "Optional: Specify a custom filename for download"
+    }
+  ],
+  "executionCode": "try {\n  helpers.log('Starting File Handler node');\n  \n  const operation = node.properties.operation.value;\n  let fileId = node.properties.fileId.value;\n  const customFilename = node.properties.filename?.value;\n  \n  helpers.log(`Operation: ${operation}`);\n  \n  // Auto-detect file ID from input data if not provided\n  if (!fileId && data && data.file && data.file.id) {\n    fileId = data.file.id;\n    helpers.log(`Auto-detected file ID from input: ${fileId}`);\n  }\n  \n  if (!fileId) {\n    helpers.error('File ID is required');\n    throw new Error('File ID is required. Provide it in the properties or ensure the input data contains a file object.');\n  }\n  \n  helpers.log(`Processing file: ${fileId}`);\n  \n  // Get file metadata from NEW file-storage system (with user isolation)\n  const file = await helpers.getFile(fileId);\n  \n  if (!file) {\n    helpers.error(`File not found: ${fileId}`);\n    throw new Error(`File not found: ${fileId}. The file may have expired or been deleted.`);\n  }\n  \n  helpers.log(`File found: ${file.name} (${file.sizeFormatted})`);\n  \n  let result;\n  \n  switch (operation) {\n    case 'download': {\n      helpers.log('Getting download URL from Firebase Storage...');\n      const downloadUrl = await helpers.getFileDownloadUrl(fileId);\n      \n      if (!downloadUrl) {\n        helpers.error('Could not create download URL');\n        throw new Error('Could not create download URL');\n      }\n      \n      const filename = customFilename || file.name;\n      helpers.log(`Download URL generated: ${filename}`);\n      \n      // Client-side download (if running in browser)\n      if (typeof window !== 'undefined') {\n        const a = document.createElement('a');\n        a.href = downloadUrl;\n        a.download = filename;\n        document.body.appendChild(a);\n        a.click();\n        document.body.removeChild(a);\n        helpers.log(`Downloading file to device: ${filename}`);\n      }\n      \n      result = {\n        downloaded: true,\n        filename: filename,\n        fileId: fileId,\n        url: downloadUrl,\n        expiresIn: 3600 // Firebase Storage URLs expire after 1 hour\n      };\n      break;\n    }\n    \n    case 'metadata': {\n      helpers.log('Retrieving file metadata');\n      result = {\n        id: file.id,\n        name: file.name,\n        mimeType: file.mimeType,\n        size: file.size,\n        sizeFormatted: file.sizeFormatted,\n        createdAt: file.createdAt,\n        expiresAt: file.expiresAt,\n        userId: file.userId,\n        executionId: file.executionId,\n        workflowId: file.workflowId\n      };\n      helpers.log('Metadata retrieved successfully');\n      break;\n    }\n    \n    case 'base64': {\n      helpers.log('Converting file to Base64...');\n      const base64 = await helpers.getFileAsBase64(fileId);\n      \n      if (!base64) {\n        helpers.error('Could not convert file to base64');\n        throw new Error('Could not convert file to base64');\n      }\n      \n      helpers.log(`File converted to Base64 (${base64.length} characters)`);\n      result = {\n        fileId: fileId,\n        filename: file.name,\n        mimeType: file.mimeType,\n        size: file.size,\n        base64: base64\n      };\n      break;\n    }\n    \n    case 'dataUrl': {\n      helpers.log('Creating Data URL...');\n      const dataUrl = await helpers.getFileAsDataUrl(fileId);\n      \n      if (!dataUrl) {\n        helpers.error('Could not create data URL');\n        throw new Error('Could not create data URL');\n      }\n      \n      helpers.log(`Data URL created (${dataUrl.length} characters)`);\n      result = {\n        fileId: fileId,\n        filename: file.name,\n        mimeType: file.mimeType,\n        size: file.size,\n        dataUrl: dataUrl\n      };\n      break;\n    }\n    \n    default: {\n      helpers.error(`Unknown operation: ${operation}`);\n      throw new Error(`Unknown operation: ${operation}`);\n    }\n  }\n  \n  helpers.log(`File Handler operation completed: ${operation}`);\n  return result;\n  \n} catch (error) {\n  helpers.error('File Handler failed:', error.message);\n  return {\n    error: 'File Handler failed',\n    message: error.message,\n    details: error.stack\n  };\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-16"
+  }
+}

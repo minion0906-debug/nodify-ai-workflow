@@ -1,0 +1,264 @@
+{
+  "id": "datetime_node",
+  "version": "1.0",
+  "name": "Date/Time",
+  "description": "Format dates, calculate time differences, add/subtract time, compare dates, and work with timezones.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Calendar",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "format",
+      "required": true,
+      "options": [
+        {
+          "id": "op-format",
+          "label": "Format Date",
+          "value": "format"
+        },
+        {
+          "id": "op-parse",
+          "label": "Parse Date String",
+          "value": "parse"
+        },
+        {
+          "id": "op-now",
+          "label": "Current Date/Time",
+          "value": "now"
+        },
+        {
+          "id": "op-add",
+          "label": "Add Time",
+          "value": "add"
+        },
+        {
+          "id": "op-subtract",
+          "label": "Subtract Time",
+          "value": "subtract"
+        },
+        {
+          "id": "op-diff",
+          "label": "Time Difference",
+          "value": "diff"
+        },
+        {
+          "id": "op-compare",
+          "label": "Compare Dates",
+          "value": "compare"
+        },
+        {
+          "id": "op-extract",
+          "label": "Extract Components",
+          "value": "extract"
+        }
+      ]
+    },
+    {
+      "name": "inputDate",
+      "displayName": "Input Date",
+      "type": "string",
+      "default": "{{data.date}}",
+      "description": "Date to process. Can be ISO string, timestamp, or {{data.field}}",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "format",
+            "parse",
+            "add",
+            "subtract",
+            "diff",
+            "compare",
+            "extract"
+          ]
+        }
+      }
+    },
+    {
+      "name": "format",
+      "displayName": "Output Format",
+      "type": "options",
+      "default": "iso",
+      "options": [
+        {
+          "id": "fmt-iso",
+          "label": "ISO 8601 (2025-10-15T10:30:00Z)",
+          "value": "iso"
+        },
+        {
+          "id": "fmt-date",
+          "label": "Date Only (2025-10-15)",
+          "value": "date"
+        },
+        {
+          "id": "fmt-time",
+          "label": "Time Only (10:30:00)",
+          "value": "time"
+        },
+        {
+          "id": "fmt-datetime",
+          "label": "Date & Time (2025-10-15 10:30:00)",
+          "value": "datetime"
+        },
+        {
+          "id": "fmt-timestamp",
+          "label": "Unix Timestamp (ms)",
+          "value": "timestamp"
+        },
+        {
+          "id": "fmt-relative",
+          "label": "Relative (2 hours ago)",
+          "value": "relative"
+        },
+        {
+          "id": "fmt-custom",
+          "label": "Custom Format",
+          "value": "custom"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "format",
+            "now"
+          ]
+        }
+      }
+    },
+    {
+      "name": "customFormat",
+      "displayName": "Custom Format",
+      "type": "string",
+      "placeholder": "YYYY-MM-DD HH:mm:ss",
+      "description": "Custom date format string",
+      "displayOptions": {
+        "show": {
+          "format": [
+            "custom"
+          ]
+        }
+      }
+    },
+    {
+      "name": "amount",
+      "displayName": "Amount",
+      "type": "number",
+      "default": 1,
+      "description": "Amount of time to add/subtract",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "add",
+            "subtract"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unit",
+      "displayName": "Time Unit",
+      "type": "options",
+      "default": "days",
+      "options": [
+        {
+          "id": "unit-ms",
+          "label": "Milliseconds",
+          "value": "milliseconds"
+        },
+        {
+          "id": "unit-sec",
+          "label": "Seconds",
+          "value": "seconds"
+        },
+        {
+          "id": "unit-min",
+          "label": "Minutes",
+          "value": "minutes"
+        },
+        {
+          "id": "unit-hour",
+          "label": "Hours",
+          "value": "hours"
+        },
+        {
+          "id": "unit-day",
+          "label": "Days",
+          "value": "days"
+        },
+        {
+          "id": "unit-week",
+          "label": "Weeks",
+          "value": "weeks"
+        },
+        {
+          "id": "unit-month",
+          "label": "Months",
+          "value": "months"
+        },
+        {
+          "id": "unit-year",
+          "label": "Years",
+          "value": "years"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "add",
+            "subtract",
+            "diff"
+          ]
+        }
+      }
+    },
+    {
+      "name": "compareDate",
+      "displayName": "Date to Compare",
+      "type": "string",
+      "description": "Second date for comparison or difference",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "compare",
+            "diff"
+          ]
+        }
+      }
+    },
+    {
+      "name": "timezone",
+      "displayName": "Timezone",
+      "type": "string",
+      "default": "UTC",
+      "placeholder": "America/New_York, Europe/London, UTC",
+      "description": "Timezone for output (IANA timezone name)"
+    }
+  ],
+  "executionCode": "const operation = node.properties.operation.value;\nlet inputDate = node.properties.inputDate?.value;\nconst format = node.properties.format?.value || 'iso';\nconst customFormat = node.properties.customFormat?.value;\nconst amount = node.properties.amount?.value || 1;\nconst unit = node.properties.unit?.value || 'days';\nlet compareDate = node.properties.compareDate?.value;\nconst timezone = node.properties.timezone?.value || 'UTC';\n\n// Resolve template variables\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') return data;\n    if (val === '{{data.date}}') return data?.date;\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const path = match[1].split('.');\n        let result = data;\n        for (const part of path) {\n          result = result?.[part];\n        }\n        return result;\n      }\n    }\n  }\n  return val;\n};\n\ninputDate = resolveValue(inputDate);\ncompareDate = resolveValue(compareDate);\n\n// Helper to parse date\nconst parseDate = (val) => {\n  if (!val) return new Date();\n  if (val instanceof Date) return val;\n  if (typeof val === 'number') return new Date(val);\n  return new Date(val);\n};\n\n// Helper to format date\nconst formatDate = (date, fmt) => {\n  const d = parseDate(date);\n  \n  switch (fmt) {\n    case 'iso':\n      return d.toISOString();\n    case 'date':\n      return d.toISOString().split('T')[0];\n    case 'time':\n      return d.toISOString().split('T')[1].split('.')[0];\n    case 'datetime':\n      return d.toISOString().replace('T', ' ').split('.')[0];\n    case 'timestamp':\n      return d.getTime();\n    case 'relative':\n      return getRelativeTime(d);\n    case 'custom':\n      return customFormatDate(d, customFormat);\n    default:\n      return d.toISOString();\n  }\n};\n\n// Helper for relative time\nconst getRelativeTime = (date) => {\n  const now = new Date();\n  const diff = now - parseDate(date);\n  const seconds = Math.floor(diff / 1000);\n  const minutes = Math.floor(seconds / 60);\n  const hours = Math.floor(minutes / 60);\n  const days = Math.floor(hours / 24);\n  \n  if (seconds < 60) return 'just now';\n  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;\n  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;\n  if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;\n  const months = Math.floor(days / 30);\n  if (months < 12) return `${months} month${months > 1 ? 's' : ''} ago`;\n  const years = Math.floor(days / 365);\n  return `${years} year${years > 1 ? 's' : ''} ago`;\n};\n\n// Helper for custom format\nconst customFormatDate = (date, fmt) => {\n  if (!fmt) return date.toISOString();\n  const d = parseDate(date);\n  const tokens = {\n    'YYYY': d.getFullYear(),\n    'MM': String(d.getMonth() + 1).padStart(2, '0'),\n    'DD': String(d.getDate()).padStart(2, '0'),\n    'HH': String(d.getHours()).padStart(2, '0'),\n    'mm': String(d.getMinutes()).padStart(2, '0'),\n    'ss': String(d.getSeconds()).padStart(2, '0'),\n  };\n  let result = fmt;\n  for (const [token, value] of Object.entries(tokens)) {\n    result = result.replace(token, value);\n  }\n  return result;\n};\n\n// Helper to add/subtract time\nconst addTime = (date, amount, unit) => {\n  const d = new Date(parseDate(date));\n  const multipliers = {\n    milliseconds: 1,\n    seconds: 1000,\n    minutes: 60 * 1000,\n    hours: 60 * 60 * 1000,\n    days: 24 * 60 * 60 * 1000,\n    weeks: 7 * 24 * 60 * 60 * 1000,\n    months: 30 * 24 * 60 * 60 * 1000, // Approximate\n    years: 365 * 24 * 60 * 60 * 1000, // Approximate\n  };\n  const ms = amount * (multipliers[unit] || 1);\n  return new Date(d.getTime() + ms);\n};\n\nhelpers.log('Starting Date/Time node');\nhelpers.log(`Operation: ${operation}`);\n\ntry {\n  switch (operation) {\n    case 'format': {\n      helpers.log(`Formatting date: ${inputDate}`);\n      helpers.log(`Output format: ${format}`);\n      const date = parseDate(inputDate);\n      const formatted = formatDate(date, format);\n      helpers.log(`Formatted result: ${formatted}`);\n      return {\n        success: true,\n        operation: 'format',\n        result: formatted,\n        format,\n        timezone\n      };\n    }\n    \n    case 'parse': {\n      helpers.log(`Parsing date string: ${inputDate}`);\n      const date = parseDate(inputDate);\n      const isValid = !isNaN(date.getTime());\n      if (isValid) {\n        helpers.log(`Parsed successfully: ${date.toISOString()}`);\n      } else {\n        helpers.warn('Failed to parse date - invalid format');\n      }\n      return {\n        success: true,\n        operation: 'parse',\n        result: date.toISOString(),\n        timestamp: date.getTime(),\n        valid: isValid\n      };\n    }\n    \n    case 'now': {\n      helpers.log('Getting current date/time');\n      const now = new Date();\n      const formatted = formatDate(now, format);\n      helpers.log(`Current time: ${formatted}`);\n      return {\n        success: true,\n        operation: 'now',\n        result: formatted,\n        timestamp: now.getTime(),\n        timezone\n      };\n    }\n    \n    case 'add': {\n      helpers.log(`Adding ${amount} ${unit} to date: ${inputDate}`);\n      const date = parseDate(inputDate);\n      const result = addTime(date, amount, unit);\n      helpers.log(`Result: ${result.toISOString()}`);\n      return {\n        success: true,\n        operation: 'add',\n        result: result.toISOString(),\n        original: date.toISOString(),\n        added: `${amount} ${unit}`\n      };\n    }\n    \n    case 'subtract': {\n      helpers.log(`Subtracting ${amount} ${unit} from date: ${inputDate}`);\n      const date = parseDate(inputDate);\n      const result = addTime(date, -amount, unit);\n      helpers.log(`Result: ${result.toISOString()}`);\n      return {\n        success: true,\n        operation: 'subtract',\n        result: result.toISOString(),\n        original: date.toISOString(),\n        subtracted: `${amount} ${unit}`\n      };\n    }\n    \n    case 'diff': {\n      helpers.log(`Calculating difference between dates`);\n      helpers.log(`Date 1: ${inputDate}`);\n      helpers.log(`Date 2: ${compareDate}`);\n      helpers.log(`Unit: ${unit}`);\n      const date1 = parseDate(inputDate);\n      const date2 = parseDate(compareDate);\n      const diff = date2.getTime() - date1.getTime();\n      \n      const multipliers = {\n        milliseconds: 1,\n        seconds: 1000,\n        minutes: 60 * 1000,\n        hours: 60 * 60 * 1000,\n        days: 24 * 60 * 60 * 1000,\n        weeks: 7 * 24 * 60 * 60 * 1000,\n        months: 30 * 24 * 60 * 60 * 1000,\n        years: 365 * 24 * 60 * 60 * 1000,\n      };\n      \n      const result = diff / (multipliers[unit] || 1);\n      helpers.log(`Difference: ${result.toFixed(2)} ${unit}`);\n      \n      return {\n        success: true,\n        operation: 'diff',\n        result: Math.round(result * 100) / 100,\n        unit,\n        milliseconds: diff,\n        date1: date1.toISOString(),\n        date2: date2.toISOString()\n      };\n    }\n    \n    case 'compare': {\n      helpers.log(`Comparing dates:`);\n      helpers.log(`Date 1: ${inputDate}`);\n      helpers.log(`Date 2: ${compareDate}`);\n      const date1 = parseDate(inputDate);\n      const date2 = parseDate(compareDate);\n      const diff = date1.getTime() - date2.getTime();\n      \n      let comparison = 'same';\n      if (diff < 0) comparison = 'before';\n      if (diff > 0) comparison = 'after';\n      helpers.log(`Date 1 is ${comparison} Date 2`);\n      \n      return {\n        success: true,\n        operation: 'compare',\n        isBefore: diff < 0,\n        isAfter: diff > 0,\n        isSame: diff === 0,\n        date1: date1.toISOString(),\n        date2: date2.toISOString()\n      };\n    }\n    \n    case 'extract': {\n      helpers.log(`Extracting date components from: ${inputDate}`);\n      const date = parseDate(inputDate);\n      helpers.log(`Year: ${date.getFullYear()}, Month: ${date.getMonth() + 1}, Day: ${date.getDate()}`);\n      return {\n        success: true,\n        operation: 'extract',\n        year: date.getFullYear(),\n        month: date.getMonth() + 1,\n        day: date.getDate(),\n        hour: date.getHours(),\n        minute: date.getMinutes(),\n        second: date.getSeconds(),\n        millisecond: date.getMilliseconds(),\n        dayOfWeek: date.getDay(),\n        timestamp: date.getTime(),\n        iso: date.toISOString()\n      };\n    }\n    \n    default:\n      return { error: `Unknown operation: ${operation}` };\n  }\n} catch (error) {\n  helpers.error('Date/Time operation failed:', error);\n  return {\n    error: error.message,\n    operation\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

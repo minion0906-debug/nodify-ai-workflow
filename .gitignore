@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files (keep example tracked)
+.env*
+!.env.example
+firebasesdk.json
+
+# Testing/coverage
+coverage/
+
+# Database files (contain sensitive data)
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Editor/OS junk
+.DS_Store
+Thumbs.db
+
+# Windows reserved device names (avoid Git indexing errors on Windows)
+nul
+prn
+con
+aux
+com1
+com2
+com3
+com4
+com5
+com6
+com7
+com8
+com9
+lpt1
+lpt2
+lpt3
+lpt4
+lpt5
+lpt6
+lpt7
+lpt8
+lpt9

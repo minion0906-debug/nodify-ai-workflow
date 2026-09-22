@@ -1,0 +1,43 @@
+{
+  "id": "wait_node",
+  "version": "1.0",
+  "name": "Wait",
+  "description": "Pause workflow execution for a given time.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#6B7280",
+  "icon": "PauseCircle",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "duration",
+      "displayName": "Duration (seconds)",
+      "type": "number",
+      "default": 10
+    }
+  ],
+  "executionCode": "helpers.log('Starting Wait node');\nconst durationSeconds = node.properties.duration.value;\nconst durationMs = durationSeconds * 1000;\nhelpers.log(`Waiting for ${durationSeconds} second${durationSeconds !== 1 ? 's' : ''} (${durationMs}ms)`);\nconst startTime = Date.now();\nawait new Promise(resolve => setTimeout(resolve, durationMs));\nconst elapsed = Date.now() - startTime;\nhelpers.log(`Wait completed (actual: ${(elapsed / 1000).toFixed(2)}s)`);\nreturn { resumed: true, waitedSeconds: durationSeconds, actualMs: elapsed };",
+  "dynamicCode": {},
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

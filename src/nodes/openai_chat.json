@@ -1,0 +1,150 @@
+{
+  "id": "openai_chat",
+  "version": "1.0",
+  "name": "OpenAI Chat",
+  "description": "Send messages to OpenAI's GPT models and get AI responses.",
+  "group": "AI",
+  "category": "ai",
+  "shape": "5x1",
+  "color": "#10A37F",
+  "icon": "Sparkles",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Response",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "credentials",
+      "options": [
+        {
+          "value": "credentials",
+          "label": "Use Credentials"
+        },
+        {
+          "value": "manual",
+          "label": "Manual API Key"
+        }
+      ]
+    },
+    {
+      "name": "credentials",
+      "displayName": "OpenAI Credentials",
+      "type": "credentials",
+      "placeholder": "Select OpenAI credentials...",
+      "typeOptions": {
+        "credentialType": "openAi"
+      },
+      "displayOptions": {
+        "show": {
+          "authentication": [
+            "credentials"
+          ]
+        }
+      }
+    },
+    {
+      "name": "apiKey",
+      "displayName": "API Key",
+      "type": "string",
+      "default": "",
+      "placeholder": "sk-...",
+      "displayOptions": {
+        "show": {
+          "authentication": [
+            "manual"
+          ]
+        }
+      }
+    },
+    {
+      "name": "model",
+      "displayName": "Model",
+      "type": "options",
+      "default": "gpt-4o-mini",
+      "options": [
+        {
+          "value": "gpt-4o",
+          "label": "GPT-4o"
+        },
+        {
+          "value": "gpt-4o-mini",
+          "label": "GPT-4o Mini"
+        },
+        {
+          "value": "gpt-4-turbo",
+          "label": "GPT-4 Turbo"
+        },
+        {
+          "value": "gpt-3.5-turbo",
+          "label": "GPT-3.5 Turbo"
+        }
+      ]
+    },
+    {
+      "name": "prompt",
+      "displayName": "User Message",
+      "type": "string",
+      "default": "{{data.message}}",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "The message to send to the AI model"
+    },
+    {
+      "name": "systemMessage",
+      "displayName": "System Message (Optional)",
+      "type": "string",
+      "default": "",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "System instructions for the AI model"
+    },
+    {
+      "name": "temperature",
+      "displayName": "Temperature",
+      "type": "number",
+      "default": 0.7,
+      "validation": {
+        "min": 0,
+        "max": 2,
+        "step": 0.1
+      },
+      "ui": {
+        "component": "slider"
+      },
+      "description": "Controls randomness. Lower is more focused, higher is more creative."
+    },
+    {
+      "name": "maxTokens",
+      "displayName": "Max Tokens",
+      "type": "number",
+      "default": 1000,
+      "description": "Maximum number of tokens to generate"
+    }
+  ],
+  "executionCode": "try {\n  helpers.log('Starting OpenAI Chat node');\n  \n  const fetch = (await import('node-fetch')).default;\n  const authentication = node.properties.authentication?.value || 'credentials';\n  const credentialId = node.properties.credentials?.value;\n  const manualApiKey = node.properties.apiKey?.value;\n  const model = node.properties.model?.value || 'gpt-4o-mini';\n  const prompt = node.properties.prompt?.value || '';\n  const systemMessage = node.properties.systemMessage?.value || '';\n  const temperature = node.properties.temperature?.value ?? 0.7;\n  const maxTokens = node.properties.maxTokens?.value || 1000;\n  \n  helpers.log(`Model: ${model}`);\n  helpers.log(`Temperature: ${temperature}`);\n  helpers.log(`Max Tokens: ${maxTokens}`);\n  \n  // Get API key from credentials helper, services, env, or manual\n  let apiKey = null;\n  \n  if (authentication === 'credentials') {\n    if (credentialId && typeof helpers?.getCredentialData === 'function') {\n      const credData = await helpers.getCredentialData(credentialId);\n      apiKey = credData?.apiKey || null;\n      helpers.log(apiKey ? 'API key loaded via helpers.getCredentialData' : 'Credential data loaded but apiKey missing');\n    } else if (credentialId && services) {\n      try {\n        helpers.log('Loading OpenAI credentials (services)...');\n        const credentialDoc = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId));\n        if (credentialDoc.exists()) {\n          const credentialData = credentialDoc.data();\n          apiKey = credentialData?.data?.apiKey;\n          helpers.log('API key loaded from credentials');\n        } else {\n          helpers.error('Credential not found:', credentialId);\n          return { error: 'Credential not found' };\n        }\n      } catch (error) {\n        helpers.error('Error loading credentials:', error);\n        return { error: 'Failed to load credentials' };\n      }\n    } else if (env?.OPENAI_API_KEY) {\n      apiKey = env.OPENAI_API_KEY;\n      helpers.log('Using OPENAI_API_KEY from environment');\n    }\n  } else if (authentication === 'manual') {\n    apiKey = manualApiKey;\n    helpers.log('Using manual API key');\n  }\n  \n  if (!apiKey) {\n    helpers.error('No API key provided');\n    return { error: 'No API key provided' };\n  }\n  \n  // Build messages array\n  const messages = [];\n  if (systemMessage) {\n    messages.push({ role: 'system', content: systemMessage });\n  }\n  messages.push({ role: 'user', content: prompt });\n  \n  helpers.log(`Sending message to OpenAI: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}`);\n  \n  // Call OpenAI API\n  const response = await fetch('https://api.openai.com/v1/chat/completions', {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'Authorization': `Bearer ${apiKey}`\n    },\n    body: JSON.stringify({\n      model,\n      messages,\n      temperature,\n      max_tokens: maxTokens\n    })\n  });\n  \n  if (!response.ok) {\n    const errorData = await response.json();\n    helpers.error(`OpenAI API error: ${response.status} ${response.statusText}`);\n    helpers.error('Error details:', JSON.stringify(errorData));\n    return {\n      error: 'OpenAI API error',\n      status: response.status,\n      details: errorData\n    };\n  }\n  \n  const result = await response.json();\n  const content = result.choices[0]?.message?.content || '';\n  \n  helpers.log(`Received response: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);\n  helpers.log(`Tokens used: ${result.usage?.total_tokens || 'unknown'}`);\n  \n  return {\n    message: content,\n    model: result.model,\n    usage: result.usage,\n    finish_reason: result.choices[0]?.finish_reason,\n    raw: result\n  };\n  \n} catch (error) {\n  helpers.error('OpenAI Chat failed:', error.message);\n  helpers.error('Stack trace:', error.stack);\n  return {\n    error: 'OpenAI Chat failed',\n    message: error.message\n  };\n}",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-17",
+    "updatedAt": "2025-10-17"
+  }
+}

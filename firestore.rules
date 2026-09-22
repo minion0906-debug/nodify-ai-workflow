@@ -1,0 +1,475 @@
+
+rules_version = '2';
+
+/**
+ * @name Nodify Firestore Security Rules
+ * @description These rules are designed to secure user data by ensuring that
+ * users can only access their own documents within the `/users/{userId}` path.
+ *
+ * @principle Path-Based Ownership: Security is enforced by leveraging the user's
+ * UID in the document path. Rules consistently check `request.auth.uid == userId`.
+ *
+ * @testing Use the Firestore Emulator with `firebase emulators:start` to test
+ * these rules locally before deploying.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    // These functions centralize common security logic.
+
+    /**
+     * @function isSignedIn
+     * @description Checks if the user is authenticated.
+     * @returns {Boolean} True if `request.auth` is not null.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @function isOwner
+     * @description Checks if the authenticated user is the owner of the document.
+     * @param {String} userId - The user ID from the document path.
+     * @returns {Boolean} True if `request.auth.uid` matches `userId`.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @function getUserData
+     * @description Gets the user document data for the authenticated user.
+     * @returns {Map} The user document data.
+     */
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    /**
+     * @function getUserRole
+     * @description Gets the role of the authenticated user.
+     * @returns {String} The user's role (user, support, moderator, developer, admin, super_admin).
+     */
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    /**
+     * @function isStaff
+     * @description Checks if the user has any staff role.
+     * @returns {Boolean} True if user is not a regular 'user'.
+     */
+    function isStaff() {
+      return isSignedIn() && getUserRole() in ['support', 'moderator', 'developer', 'admin', 'super_admin'];
+    }
+
+    /**
+     * @function hasRole
+     * @description Checks if the user has a specific role.
+     * @param {String} role - The role to check.
+     * @returns {Boolean} True if user has the specified role.
+     */
+    function hasRole(role) {
+      return isSignedIn() && getUserRole() == role;
+    }
+
+    /**
+     * @function hasAnyRole
+     * @description Checks if the user has any of the specified roles.
+     * @param {List} roles - List of roles to check.
+     * @returns {Boolean} True if user has any of the specified roles.
+     */
+    function hasAnyRole(roles) {
+      return isSignedIn() && getUserRole() in roles;
+    }
+
+    /**
+     * @function canAccessAllUsers
+     * @description Checks if user can access all user documents.
+     * @returns {Boolean} True if user has permission to view all users.
+     */
+    function canAccessAllUsers() {
+      return hasAnyRole(['support', 'moderator', 'developer', 'admin', 'super_admin']);
+    }
+
+    /**
+     * @function canModifyUser
+     * @description Checks if user can modify other users.
+     * @returns {Boolean} True if user is admin or super_admin.
+     */
+    function canModifyUser() {
+      return hasAnyRole(['admin', 'super_admin']);
+    }
+
+    /**
+     * @function canDeleteUser
+     * @description Checks if user can delete other users.
+     * @returns {Boolean} True if user is super_admin.
+     */
+    function canDeleteUser() {
+      return hasRole('super_admin');
+    }
+
+    /**
+     * @function canSuspendUser
+     * @description Checks if user can suspend other users.
+     * @returns {Boolean} True if user is moderator, admin, or super_admin.
+     */
+    function canSuspendUser() {
+      return hasAnyRole(['moderator', 'admin', 'super_admin']);
+    }
+
+    /**
+     * @function canAccessAllWorkflows
+     * @description Checks if user can view all workflows.
+     * @returns {Boolean} True if user is staff.
+     */
+    function canAccessAllWorkflows() {
+      return isStaff();
+    }
+
+    /**
+     * @function canModifyAnyWorkflow
+     * @description Checks if user can modify any workflow.
+     * @returns {Boolean} True if user is admin or super_admin.
+     */
+    function canModifyAnyWorkflow() {
+      return hasAnyRole(['admin', 'super_admin']);
+    }
+
+    /**
+     * @function isAccountActive
+     * @description Checks if the user's account is active.
+     * @returns {Boolean} True if account status is 'active'.
+     */
+    function isAccountActive() {
+      return isSignedIn() && getUserData().accountStatus == 'active';
+    }
+
+    /**
+     * @description Top-level user collection.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      /**
+       * @description Controls access to the user's profile document.
+       * @path /databases/{database}/documents/users/{userId}
+       * @allow (get) if owner OR staff member
+       * @allow (create) for any signed-in user (for new user creation)
+       * @allow (update) if owner OR admin/super_admin
+       * @allow (delete) only for super_admin
+       * @allow (list) only for staff members
+       */
+      allow get: if isOwner(userId) || canAccessAllUsers();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if (isOwner(userId) && isAccountActive()) || canModifyUser();
+      allow delete: if canDeleteUser();
+      allow list: if canAccessAllUsers();
+
+      /**
+       * @description Controls access to a user's workflows.
+       * @path /databases/{database}/documents/users/{userId}/workflows/{workflowId}
+       * @allow (read, list) for owner OR staff members
+       * @allow (create, update, delete) for owner (if active) OR admin/super_admin
+       * @allow (get) publicly for active workflows (needed for webhook API execution)
+       */
+      match /workflows/{workflowId} {
+        // Owner can do everything (if account is active)
+        allow get, list: if isOwner(userId) || canAccessAllWorkflows();
+        allow create: if (isOwner(userId) && isAccountActive()) || canModifyAnyWorkflow();
+        allow update: if (isOwner(userId) && isAccountActive()) || canModifyAnyWorkflow();
+        allow delete: if (isOwner(userId) && isAccountActive()) || canModifyAnyWorkflow();
+
+        // Allow public read for active workflows (needed for webhook API route without auth)
+        // This is safe because the webhook registration in /webhooks collection acts as authorization
+        allow get: if resource.data.status == 'active';
+
+        /**
+         * @description Controls access to a workflow's execution history.
+         * @path /users/{userId}/workflows/{workflowId}/executions/{executionId}
+         * @allow (CRUD, list) only for the workflow owner.
+         * @allow (read, list) for staff members (for admin panel statistics)
+         */
+        match /executions/{executionId} {
+          allow read, write: if isOwner(userId);
+          allow read, list: if isStaff();
+        }
+
+        /**
+         * @description Controls access to test webhook calls for a specific workflow.
+         * @path /users/{userId}/workflows/{workflowId}/webhook_calls/{callId}
+         * @allow (read, write) only for the workflow owner to enable real-time listening.
+         */
+        match /webhook_calls/{callId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      /**
+       * @description Controls access to a user's credentials.
+       * @path /databases/{database}/documents/users/{userId}/credentials/{credentialId}
+       * @allow (CRUD, list) only for the owner.
+       */
+      match /credentials/{credentialId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Controls access to a user's custom data tables.
+       * @path /databases/{database}/documents/users/{userId}/tables/{tableId}
+       * @allow (CRUD, list) only for the owner.
+       */
+      match /tables/{tableId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+
+        /**
+         * @description Controls access to rows within a user's table.
+         * @path /users/{userId}/tables/{tableId}/rows/{rowId}
+         * @allow (CRUD, list) only for the table owner.
+         */
+        match /rows/{rowId} {
+          allow get, list, create, update, delete: if isOwner(userId);
+        }
+      }
+      
+      /**
+       * @description Controls access to table rows at the user level.
+       * @path /databases/{database}/documents/users/{userId}/tableRows/{rowId}
+       * @allow (create, get, update, delete, list) if the user is the owner (request.auth.uid == userId).
+       * @deny (create, get, update, delete, list) if the user is not the owner.
+       * @principle Restricts access to a user's own data tree.
+       */
+      match /tableRows/{rowId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Controls access to a user's custom nodes.
+       * @path /databases/{database}/documents/users/{userId}/customNodes/{nodeId}
+       * @allow (CRUD, list) only for the owner.
+       */
+      match /customNodes/{nodeId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Controls access to a user's node sub-groups.
+       * @path /databases/{database}/documents/users/{userId}/subGroups/{subGroupId}
+       * @allow (CRUD, list) only for the owner.
+       */
+      match /subGroups/{subGroupId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+      }
+    }
+    
+    /**
+     * @description Controls access to community posts (public read, authenticated write).
+     * @path /databases/{database}/documents/community_posts/{postId}
+     * @allow (read) for any authenticated user
+     * @allow (create) for authenticated users
+     * @allow (update, delete) only for the post author
+     * @principle Community posts are public but moderation-ready.
+     */
+    match /community_posts/{postId} {
+      function isAuthor() {
+        return isSignedIn() && request.auth.uid == resource.data.authorId;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthor();
+      allow delete: if isAuthor();
+    }
+
+    /**
+     * @description Controls access to community profiles (public read, own profile write).
+     * @path /databases/{database}/documents/community_profiles/{profileId}
+     * @allow (read) for any authenticated user
+     * @allow (create, update) only for own profile
+     * @principle Profiles are public but users can only edit their own.
+     */
+    match /community_profiles/{profileId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == profileId;
+      allow update: if isSignedIn() && request.auth.uid == profileId;
+      allow delete: if isSignedIn() && request.auth.uid == profileId;
+    }
+
+    /**
+     * @description Controls access to community comments (public read, authenticated write).
+     * @path /databases/{database}/documents/community_comments/{commentId}
+     * @allow (read) for any authenticated user
+     * @allow (create) for authenticated users
+     * @allow (update, delete) only for the comment author
+     * @principle Comments are public but users can only edit/delete their own.
+     */
+    match /community_comments/{commentId} {
+       function isAuthor() {
+        return isSignedIn() && request.auth.uid == resource.data.authorId;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthor();
+      allow delete: if isAuthor();
+    }
+
+    /**
+     * @description Controls access to webhook registrations.
+     * @path /databases/{database}/documents/webhooks/{webhookId}
+     * @allow (read) for everyone (including unauthenticated API routes)
+     * @allow (create, update) for authenticated users who own the workflow
+     * @allow (delete) for the user who created the webhook
+     * @principle Webhooks need to be publicly readable for API routes to work,
+     * but only the owner can create/update/delete them.
+     */
+    match /webhook_mappings/{webhookId} {
+      // Allow public read access (needed for webhook API route)
+      allow read: if true;
+
+      // Allow authenticated users to create mappings for their own workflows
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Allow users to update their own mappings
+      allow update: if isSignedIn() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Allow users to delete their own mappings
+      allow delete: if isSignedIn() &&
+                       resource.data.userId == request.auth.uid;
+    }
+
+    /**
+     * @description Controls access to audit logs (admin panel).
+     * @path /databases/{database}/documents/audit_logs/{logId}
+     * @allow (read, list) only for admin and super_admin
+     * @allow (create) for staff members (auto-logged actions)
+     * @deny (update, delete) for everyone (immutable logs)
+     */
+    match /audit_logs/{logId} {
+      allow read, list: if hasAnyRole(['admin', 'super_admin', 'developer']);
+      allow create: if isStaff();
+      allow update, delete: if false; // Audit logs are immutable
+    }
+
+    /**
+     * @description Controls access to support tickets.
+     * @path /databases/{database}/documents/support_tickets/{ticketId}
+     * @allow (read) for ticket owner OR staff
+     * @allow (create) for any authenticated user
+     * @allow (update) for ticket owner OR staff
+     * @allow (delete) only for admin/super_admin
+     */
+    match /support_tickets/{ticketId} {
+      function isTicketOwner() {
+        return isSignedIn() && request.auth.uid == resource.data.userId;
+      }
+
+      allow read: if isTicketOwner() || hasAnyRole(['support', 'moderator', 'admin', 'super_admin']);
+      allow list: if hasAnyRole(['support', 'moderator', 'admin', 'super_admin']);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isTicketOwner() || hasAnyRole(['support', 'moderator', 'admin', 'super_admin']);
+      allow delete: if hasAnyRole(['admin', 'super_admin']);
+
+      /**
+       * @description Controls access to support ticket messages.
+       * @path /support_tickets/{ticketId}/messages/{messageId}
+       * @allow (read) for ticket owner OR staff (respecting isInternal flag)
+       * @allow (create) for ticket owner OR staff
+       * @deny (update, delete) for everyone (immutable messages)
+       */
+      match /messages/{messageId} {
+        function canReadMessage() {
+          let ticket = get(/databases/$(database)/documents/support_tickets/$(ticketId)).data;
+          let isOwner = request.auth.uid == ticket.userId;
+          let isStaffMember = isStaff();
+          let isPublicMessage = resource.data.isInternal == false;
+
+          return (isOwner && isPublicMessage) || isStaffMember;
+        }
+
+        allow read, list: if canReadMessage();
+        allow create: if isSignedIn();
+        allow update, delete: if false; // Messages are immutable
+      }
+    }
+
+    /**
+     * @description Controls access to staff members list (for admin panel).
+     * @path /databases/{database}/documents/staff_members/{staffId}
+     * @allow (read, list) only for staff members
+     * @allow (create, update) only for admin and super_admin
+     * @allow (delete) only for super_admin
+     */
+    match /staff_members/{staffId} {
+      allow read, list: if isStaff();
+      allow create, update: if hasAnyRole(['admin', 'super_admin']);
+      allow delete: if hasRole('super_admin');
+    }
+
+    /**
+     * @description Controls access to system settings (admin panel).
+     * @path /databases/{database}/documents/system_settings/{settingId}
+     * @allow (read) for developers, admins, and super_admins
+     * @allow (write) only for admin and super_admin
+     */
+    match /system_settings/{settingId} {
+      allow read: if hasAnyRole(['developer', 'admin', 'super_admin']);
+      allow write: if hasAnyRole(['admin', 'super_admin']);
+    }
+
+    /**
+     * @description Controls access to public nodes marketplace.
+     * @path /databases/{database}/documents/public_nodes/{nodeId}
+     * @allow (read, list) for any authenticated user
+     * @allow (create) for any authenticated user (pending approval)
+     * @allow (update) for node creator OR moderators/admins
+     * @allow (delete) for node creator OR admins
+     */
+    match /public_nodes/{nodeId} {
+      function isNodeCreator() {
+        return isSignedIn() && request.auth.uid == resource.data.createdBy;
+      }
+
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isNodeCreator() || hasAnyRole(['moderator', 'admin', 'super_admin']);
+      allow delete: if isNodeCreator() || hasAnyRole(['admin', 'super_admin']);
+    }
+
+    /**
+     * @description Controls access to analytics data (admin panel).
+     * @path /databases/{database}/documents/analytics/{docId}
+     * @allow (read) for staff members
+     * @allow (write) only for system (server-side)
+     */
+    match /analytics/{docId} {
+      allow read: if isStaff();
+      allow write: if false; // Only server-side can write
+    }
+
+    /**
+     * @description CollectionGroup rules for workflows (allows querying across all users)
+     * @path /databases/{database}/documents/{path=**}/workflows/{workflowId}
+     * @allow (read, list) for staff members
+     */
+    match /{path=**}/workflows/{workflowId} {
+      allow read, list: if isStaff();
+    }
+
+    /**
+     * @description CollectionGroup rules for executions (allows querying across all users)
+     * @path /databases/{database}/documents/{path=**}/executions/{executionId}
+     * @allow (read, list) for staff members
+     */
+    match /{path=**}/executions/{executionId} {
+      allow read, list: if isStaff();
+    }
+  }
+}

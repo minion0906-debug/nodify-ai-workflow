@@ -1,0 +1,42 @@
+{
+  "id": "function_item_node",
+  "version": "1.0",
+  "name": "Function Item",
+  "description": "Run custom logic on each item in an array.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#8B5CF6",
+  "icon": "Braces",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input Array",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output Array",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "itemCode",
+      "displayName": "Code for Each Item",
+      "type": "javascript",
+      "default": "return { ...item, doubled: item.value * 2 };"
+    }
+  ],
+  "executionCode": "helpers.log('Starting Function Item node');\nconst itemsToProcess = Array.isArray(data) ? data : (data && typeof data === 'object' ? Object.values(data).find(Array.isArray) || [] : []);\nhelpers.log(`Processing ${itemsToProcess.length} items`);\n\nif (itemsToProcess.length === 0) {\n  helpers.warn('No items to process, returning empty array');\n  return [];\n}\n\nconst userCode = node.properties.itemCode.value;\nhelpers.log(`Applying function to each item (code length: ${userCode.length} characters)`);\n\ntry {\n  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;\n  const fn = new AsyncFunction('item', 'helpers', userCode);\n  const results = await Promise.all(itemsToProcess.map((item, index) => {\n    try {\n      return fn(item, helpers);\n    } catch (error) {\n      helpers.error(`Error processing item ${index + 1}:`, error.message);\n      throw error;\n    }\n  }));\n  helpers.log(`Successfully processed ${results.length} items`);\n  return results;\n} catch (error) {\n  helpers.error('Function Item execution failed:', error.message);\n  throw error;\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

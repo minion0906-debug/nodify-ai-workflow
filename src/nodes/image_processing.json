@@ -1,0 +1,386 @@
+{
+  "id": "image_processing_node",
+  "version": "1.0",
+  "name": "Image Processing",
+  "description": "Transform images: resize, crop, rotate, convert formats, apply filters, compress, and extract metadata.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "shape": "2x2",
+  "color": "#F59E0B",
+  "icon": "Image",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "resize",
+      "required": true,
+      "options": [
+        {
+          "id": "op-resize",
+          "label": "Resize",
+          "value": "resize"
+        },
+        {
+          "id": "op-crop",
+          "label": "Crop",
+          "value": "crop"
+        },
+        {
+          "id": "op-rotate",
+          "label": "Rotate",
+          "value": "rotate"
+        },
+        {
+          "id": "op-convert",
+          "label": "Convert Format",
+          "value": "convert"
+        },
+        {
+          "id": "op-blur",
+          "label": "Blur",
+          "value": "blur"
+        },
+        {
+          "id": "op-grayscale",
+          "label": "Grayscale",
+          "value": "grayscale"
+        },
+        {
+          "id": "op-compress",
+          "label": "Compress",
+          "value": "compress"
+        },
+        {
+          "id": "op-watermark",
+          "label": "Add Watermark",
+          "value": "watermark"
+        },
+        {
+          "id": "op-metadata",
+          "label": "Get Metadata",
+          "value": "metadata"
+        }
+      ]
+    },
+    {
+      "name": "inputPath",
+      "displayName": "Input Image Path",
+      "type": "string",
+      "required": true,
+      "placeholder": "./input/image.jpg or {{data.imagePath}}",
+      "description": "Path to input image file"
+    },
+    {
+      "name": "outputPath",
+      "displayName": "Output Image Path",
+      "type": "string",
+      "placeholder": "./output/processed.jpg",
+      "description": "Path to save processed image (optional for metadata)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "resize",
+            "crop",
+            "rotate",
+            "convert",
+            "blur",
+            "grayscale",
+            "compress",
+            "watermark"
+          ]
+        }
+      }
+    },
+    {
+      "name": "width",
+      "displayName": "Width (px)",
+      "type": "number",
+      "placeholder": "800",
+      "description": "Target width in pixels",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "resize",
+            "crop"
+          ]
+        }
+      }
+    },
+    {
+      "name": "height",
+      "displayName": "Height (px)",
+      "type": "number",
+      "placeholder": "600",
+      "description": "Target height in pixels",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "resize",
+            "crop"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fit",
+      "displayName": "Resize Fit Mode",
+      "type": "options",
+      "default": "cover",
+      "options": [
+        {
+          "id": "fit-cover",
+          "label": "Cover (crop to fit)",
+          "value": "cover"
+        },
+        {
+          "id": "fit-contain",
+          "label": "Contain (fit inside)",
+          "value": "contain"
+        },
+        {
+          "id": "fit-fill",
+          "label": "Fill (stretch)",
+          "value": "fill"
+        },
+        {
+          "id": "fit-inside",
+          "label": "Inside (preserve aspect)",
+          "value": "inside"
+        },
+        {
+          "id": "fit-outside",
+          "label": "Outside (ensure minimum)",
+          "value": "outside"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "resize"
+          ]
+        }
+      }
+    },
+    {
+      "name": "cropX",
+      "displayName": "Crop X Position",
+      "type": "number",
+      "default": 0,
+      "description": "X coordinate for crop start",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "crop"
+          ]
+        }
+      }
+    },
+    {
+      "name": "cropY",
+      "displayName": "Crop Y Position",
+      "type": "number",
+      "default": 0,
+      "description": "Y coordinate for crop start",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "crop"
+          ]
+        }
+      }
+    },
+    {
+      "name": "angle",
+      "displayName": "Rotation Angle",
+      "type": "number",
+      "default": 90,
+      "placeholder": "90, 180, 270, 45",
+      "description": "Rotation angle in degrees",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "rotate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "format",
+      "displayName": "Output Format",
+      "type": "options",
+      "default": "jpeg",
+      "options": [
+        {
+          "id": "fmt-jpeg",
+          "label": "JPEG",
+          "value": "jpeg"
+        },
+        {
+          "id": "fmt-png",
+          "label": "PNG",
+          "value": "png"
+        },
+        {
+          "id": "fmt-webp",
+          "label": "WebP",
+          "value": "webp"
+        },
+        {
+          "id": "fmt-avif",
+          "label": "AVIF",
+          "value": "avif"
+        },
+        {
+          "id": "fmt-tiff",
+          "label": "TIFF",
+          "value": "tiff"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "convert",
+            "compress"
+          ]
+        }
+      }
+    },
+    {
+      "name": "quality",
+      "displayName": "Quality (1-100)",
+      "type": "number",
+      "default": 80,
+      "description": "Output quality for JPEG/WebP (higher = better quality, larger file)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "convert",
+            "compress"
+          ]
+        }
+      }
+    },
+    {
+      "name": "blurAmount",
+      "displayName": "Blur Amount",
+      "type": "number",
+      "default": 5,
+      "description": "Blur sigma (0.3 to 1000)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "blur"
+          ]
+        }
+      }
+    },
+    {
+      "name": "watermarkPath",
+      "displayName": "Watermark Image Path",
+      "type": "string",
+      "placeholder": "./watermark.png",
+      "description": "Path to watermark image",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "watermark"
+          ]
+        }
+      }
+    },
+    {
+      "name": "watermarkPosition",
+      "displayName": "Watermark Position",
+      "type": "options",
+      "default": "southeast",
+      "options": [
+        {
+          "id": "pos-center",
+          "label": "Center",
+          "value": "center"
+        },
+        {
+          "id": "pos-ne",
+          "label": "Top Right",
+          "value": "northeast"
+        },
+        {
+          "id": "pos-nw",
+          "label": "Top Left",
+          "value": "northwest"
+        },
+        {
+          "id": "pos-se",
+          "label": "Bottom Right",
+          "value": "southeast"
+        },
+        {
+          "id": "pos-sw",
+          "label": "Bottom Left",
+          "value": "southwest"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "watermark"
+          ]
+        }
+      }
+    },
+    {
+      "name": "watermarkOpacity",
+      "displayName": "Watermark Opacity (0-1)",
+      "type": "number",
+      "default": 0.5,
+      "description": "Watermark opacity (0 = transparent, 1 = opaque)",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "watermark"
+          ]
+        }
+      }
+    },
+    {
+      "name": "returnBuffer",
+      "displayName": "Return as Buffer",
+      "type": "boolean",
+      "default": false,
+      "description": "Return image as buffer instead of saving to file"
+    }
+  ],
+  "executionCode": "const operation = node.properties.operation.value;\nlet inputPath = node.properties.inputPath.value;\nlet outputPath = node.properties.outputPath?.value;\nconst width = node.properties.width?.value;\nconst height = node.properties.height?.value;\nconst fit = node.properties.fit?.value || 'cover';\nconst cropX = node.properties.cropX?.value || 0;\nconst cropY = node.properties.cropY?.value || 0;\nconst angle = node.properties.angle?.value || 90;\nconst format = node.properties.format?.value || 'jpeg';\nconst quality = node.properties.quality?.value || 80;\nconst blurAmount = node.properties.blurAmount?.value || 5;\nconst watermarkPath = node.properties.watermarkPath?.value;\nconst watermarkPosition = node.properties.watermarkPosition?.value || 'southeast';\nconst watermarkOpacity = node.properties.watermarkOpacity?.value || 0.5;\nconst returnBuffer = node.properties.returnBuffer?.value === true;\n\n// Resolve template variables\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') return data;\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const path = match[1].split('.');\n        let result = data;\n        for (const part of path) {\n          result = result?.[part];\n        }\n        return result !== undefined ? String(result) : val;\n      }\n    }\n  }\n  return val;\n};\n\ninputPath = resolveValue(inputPath);\nif (outputPath) {\n  outputPath = resolveValue(outputPath);\n}\n\nif (!inputPath) {\n  return {\n    path: 'error',\n    error: 'Input image path is required'\n  };\n}\n\nif (!outputPath && !returnBuffer && operation !== 'metadata') {\n  return {\n    path: 'error',\n    error: 'Output path is required (or enable returnBuffer)'\n  };\n}\n\nhelpers.log(`Image Processing: ${operation} on ${inputPath}`);\n\n// Note: This is a template implementation\n// In production, install: npm install sharp\n// Sharp is a high-performance image processing library for Node.js\n\ntry {\n  // Example usage with Sharp:\n  // const sharp = require('sharp');\n  // const image = sharp(inputPath);\n  // \n  // For resize:\n  // await image.resize(width, height, { fit }).toFile(outputPath);\n  // \n  // For crop:\n  // await image.extract({ left: cropX, top: cropY, width, height }).toFile(outputPath);\n  // \n  // For rotate:\n  // await image.rotate(angle).toFile(outputPath);\n  // \n  // For convert:\n  // await image.toFormat(format, { quality }).toFile(outputPath);\n  // \n  // For blur:\n  // await image.blur(blurAmount).toFile(outputPath);\n  // \n  // For grayscale:\n  // await image.grayscale().toFile(outputPath);\n  // \n  // For watermark:\n  // const watermark = await sharp(watermarkPath)\n  //   .composite([{ input: watermarkPath, gravity: watermarkPosition, blend: 'over' }])\n  //   .toFile(outputPath);\n  // \n  // For metadata:\n  // const metadata = await image.metadata();\n  \n  switch (operation) {\n    case 'resize': {\n      if (!width && !height) {\n        return {\n          path: 'error',\n          error: 'Width or height is required for resize operation'\n        };\n      }\n      \n      helpers.log(`Resize to ${width || 'auto'}x${height || 'auto'}, fit: ${fit}`);\n      \n      return {\n        success: true,\n        operation: 'resize',\n        message: 'Image resize simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          width,\n          height,\n          fit\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'crop': {\n      if (!width || !height) {\n        return {\n          path: 'error',\n          error: 'Width and height are required for crop operation'\n        };\n      }\n      \n      helpers.log(`Crop ${width}x${height} from (${cropX}, ${cropY})`);\n      \n      return {\n        success: true,\n        operation: 'crop',\n        message: 'Image crop simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          x: cropX,\n          y: cropY,\n          width,\n          height\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'rotate': {\n      helpers.log(`Rotate by ${angle} degrees`);\n      \n      return {\n        success: true,\n        operation: 'rotate',\n        message: 'Image rotation simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          angle\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'convert': {\n      helpers.log(`Convert to ${format}, quality: ${quality}`);\n      \n      return {\n        success: true,\n        operation: 'convert',\n        message: 'Format conversion simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          format,\n          quality\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'blur': {\n      helpers.log(`Apply blur: ${blurAmount}`);\n      \n      return {\n        success: true,\n        operation: 'blur',\n        message: 'Blur effect simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          amount: blurAmount\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'grayscale': {\n      helpers.log('Convert to grayscale');\n      \n      return {\n        success: true,\n        operation: 'grayscale',\n        message: 'Grayscale conversion simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'compress': {\n      helpers.log(`Compress to ${format}, quality: ${quality}`);\n      \n      return {\n        success: true,\n        operation: 'compress',\n        message: 'Image compression simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          format,\n          quality\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'watermark': {\n      if (!watermarkPath) {\n        return {\n          path: 'error',\n          error: 'Watermark image path is required'\n        };\n      }\n      \n      helpers.log(`Add watermark from ${watermarkPath}, position: ${watermarkPosition}`);\n      \n      return {\n        success: true,\n        operation: 'watermark',\n        message: 'Watermark addition simulated. Install sharp for production use.',\n        inputPath,\n        outputPath: returnBuffer ? null : outputPath,\n        settings: {\n          watermarkPath,\n          position: watermarkPosition,\n          opacity: watermarkOpacity\n        },\n        note: 'Install: npm install sharp'\n      };\n    }\n    \n    case 'metadata': {\n      helpers.log('Extract image metadata');\n      \n      // Check if file exists\n      try {\n        const stats = modules.fs.statSync(inputPath);\n        \n        return {\n          success: true,\n          operation: 'metadata',\n          inputPath,\n          metadata: {\n            fileSize: stats.size,\n            message: 'Metadata extraction simulated. Install sharp for full metadata.',\n            note: 'Install sharp to get: width, height, format, colorSpace, channels, etc.'\n          },\n          note: 'Install: npm install sharp'\n        };\n      } catch (err) {\n        return {\n          path: 'error',\n          error: `File not found: ${inputPath}`,\n          details: err.message\n        };\n      }\n    }\n    \n    default:\n      return {\n        path: 'error',\n        error: `Unknown operation: ${operation}`\n      };\n  }\n} catch (error) {\n  helpers.error('Image processing failed:', error);\n  return {\n    path: 'error',\n    error: error.message,\n    details: error.stack\n  };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15",
+    "notes": "Template implementation. Install sharp for production: npm install sharp"
+  }
+}

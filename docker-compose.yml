@@ -1,0 +1,127 @@
+# ═══════════════════════════════════════════════════════════════
+# NODIFY DOCKER COMPOSE
+# ═══════════════════════════════════════════════════════════════
+#
+# Quick start:
+#   1. Copy .env.example to .env.local and configure
+#   2. docker-compose up -d
+#   3. Open http://localhost:9003
+#
+# Commands:
+#   docker-compose up -d          # Start in background
+#   docker-compose logs -f        # View logs
+#   docker-compose down           # Stop
+#   docker-compose restart        # Restart
+#
+# ═══════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # Nodify Application
+  # ─────────────────────────────────────────────────────────────
+  nodify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Use cache for faster rebuilds
+      cache_from:
+        - nodify:latest
+
+    image: nodify:latest
+
+    container_name: nodify-app
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Port mapping (host:container)
+    ports:
+      - "9003:9003"
+
+    # Environment variables from .env.local
+    env_file:
+      - .env.local
+
+    # Additional environment variables
+    environment:
+      - NODE_ENV=production
+      - PORT=9003
+
+    # Volumes for persistent data
+    volumes:
+      # SQLite database persistence
+      - nodify-data:/app/data
+      # File uploads persistence
+      - nodify-uploads:/app/public/uploads
+      # Logs (optional)
+      - ./logs:/app/logs
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9003/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits (optional - adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 512M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ─────────────────────────────────────────────────────────────
+  # (Optional) Redis for Rate Limiting
+  # ─────────────────────────────────────────────────────────────
+  # Uncomment if you want to add Redis for rate limiting
+  #
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: nodify-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - nodify-redis-data:/data
+  #   command: redis-server --appendonly yes
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+
+# ─────────────────────────────────────────────────────────────
+# Volumes for Data Persistence
+# ─────────────────────────────────────────────────────────────
+volumes:
+  # SQLite database storage
+  nodify-data:
+    driver: local
+
+  # File uploads storage
+  nodify-uploads:
+    driver: local
+
+  # Redis data (if enabled)
+  # nodify-redis-data:
+  #   driver: local
+
+# ─────────────────────────────────────────────────────────────
+# Networks (optional - uses default bridge network)
+# ─────────────────────────────────────────────────────────────
+# networks:
+#   nodify-network:
+#     driver: bridge

@@ -1,0 +1,239 @@
+{
+  "id": "http_request",
+  "version": "1.0",
+  "name": "HTTP Request",
+  "description": "Send an HTTP request to any API endpoint.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#0284C7",
+  "icon": "Globe",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Response",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "apiKey",
+          "label": "API Key"
+        }
+      ]
+    },
+    {
+      "name": "credentials",
+      "displayName": "Credentials",
+      "type": "credentials",
+      "placeholder": "Select credentials...",
+      "typeOptions": {
+        "credentialType": "apiKey"
+      },
+      "displayOptions": {
+        "show": {
+          "authentication": [
+            "apiKey"
+          ]
+        }
+      }
+    },
+    {
+      "name": "url",
+      "displayName": "URL",
+      "type": "string",
+      "default": "https://api.example.com/users/{{data.userId}}",
+      "placeholder": "https://api.example.com",
+      "required": true,
+      "ui": {
+        "component": "code"
+      }
+    },
+    {
+      "name": "method",
+      "displayName": "HTTP Method",
+      "type": "options",
+      "default": "GET",
+      "options": [
+        {
+          "value": "GET",
+          "label": "GET"
+        },
+        {
+          "value": "POST",
+          "label": "POST"
+        },
+        {
+          "value": "PUT",
+          "label": "PUT"
+        },
+        {
+          "value": "DELETE",
+          "label": "DELETE"
+        },
+        {
+          "value": "PATCH",
+          "label": "PATCH"
+        }
+      ]
+    },
+    {
+      "name": "sendHeaders",
+      "displayName": "Send Custom Headers",
+      "type": "boolean",
+      "default": false,
+      "description": "Enable to add custom HTTP headers to the request"
+    },
+    {
+      "name": "headersCollection",
+      "displayName": "Headers",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Header",
+      "description": "HTTP headers to send with the request",
+      "displayOptions": {
+        "show": {
+          "sendHeaders": [true]
+        }
+      },
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "key",
+            "displayName": "Header Name",
+            "type": "string",
+            "required": true,
+            "placeholder": "Content-Type",
+            "description": "Name of the HTTP header (e.g., Authorization, Content-Type)"
+          },
+          {
+            "name": "value",
+            "displayName": "Header Value",
+            "type": "string",
+            "required": true,
+            "placeholder": "application/json",
+            "description": "Value for this header. Can use {{data.field}} to reference input data",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sendQueryParams",
+      "displayName": "Send Query Parameters",
+      "type": "boolean",
+      "default": false,
+      "description": "Enable to add query parameters to the URL"
+    },
+    {
+      "name": "queryParams",
+      "displayName": "Query Parameters",
+      "type": "fixedCollection",
+      "default": [],
+      "placeholder": "Add Parameter",
+      "description": "Query parameters to append to the URL",
+      "displayOptions": {
+        "show": {
+          "sendQueryParams": [true]
+        }
+      },
+      "typeOptions": {
+        "multipleValues": true,
+        "fields": [
+          {
+            "name": "key",
+            "displayName": "Parameter Name",
+            "type": "string",
+            "required": true,
+            "placeholder": "page",
+            "description": "Name of the query parameter"
+          },
+          {
+            "name": "value",
+            "displayName": "Parameter Value",
+            "type": "string",
+            "required": true,
+            "placeholder": "1",
+            "description": "Value for this parameter. Can use {{data.field}}",
+            "ui": {
+              "component": "code"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "body",
+      "displayName": "Body (JSON)",
+      "type": "json",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "displayOptions": {
+        "show": {
+          "method": [
+            "POST",
+            "PUT",
+            "PATCH"
+          ]
+        }
+      }
+    },
+    {
+      "name": "responseType",
+      "displayName": "Response Type",
+      "type": "options",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Auto-detect"
+        },
+        {
+          "value": "json",
+          "label": "JSON"
+        },
+        {
+          "value": "text",
+          "label": "Text"
+        },
+        {
+          "value": "binary",
+          "label": "Binary/File"
+        }
+      ],
+      "description": "How to handle the response. Auto-detect will determine based on Content-Type header."
+    }
+  ],
+  "executionCode": "try {\n  helpers.log('Starting HTTP Request node');\n  \n  const fetch = (await import('node-fetch')).default;\n  let url = node.properties.url.value;\n  const method = node.properties.method.value;\n  const bodyValue = node.properties.body.value;\n  const responseType = node.properties.responseType?.value || 'auto';\n  const authentication = node.properties.authentication?.value || 'none';\n  const credentialId = node.properties.credentials?.value;\n  \n  helpers.log(`URL: ${url}`);\n  helpers.log(`Method: ${method}`);\n  helpers.log(`Response Type: ${responseType}`);\n  \n  // Build headers from fixedCollection\n  const headers = {};\n  const sendHeaders = node.properties.sendHeaders?.value;\n  const headersCollection = node.properties.headersCollection?.value || [];\n  \n  if (sendHeaders && Array.isArray(headersCollection)) {\n    helpers.log(`Processing ${headersCollection.length} custom header(s)`);\n    for (const header of headersCollection) {\n      if (header.key && header.value) {\n        headers[header.key] = header.value;\n        helpers.log(`Header: ${header.key} = ${header.value}`);\n      }\n    }\n  }\n  \n  // Build query parameters from fixedCollection\n  const sendQueryParams = node.properties.sendQueryParams?.value;\n  const queryParamsCollection = node.properties.queryParams?.value || [];\n  \n  if (sendQueryParams && Array.isArray(queryParamsCollection) && queryParamsCollection.length > 0) {\n    helpers.log(`Processing ${queryParamsCollection.length} query parameter(s)`);\n    const urlObj = new URL(url);\n    for (const param of queryParamsCollection) {\n      if (param.key && param.value !== undefined && param.value !== null) {\n        urlObj.searchParams.append(param.key, String(param.value));\n        helpers.log(`Query param: ${param.key} = ${param.value}`);\n      }\n    }\n    url = urlObj.toString();\n    helpers.log(`Final URL with params: ${url}`);\n  }\n  \n  if (authentication === 'apiKey' && credentialId && services) {\n    try {\n      helpers.log('Loading credentials...');\n      const credentialDoc = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId));\n      if (credentialDoc.exists()) {\n        const credentialData = credentialDoc.data();\n        const apiKey = credentialData?.data?.apiKey;\n        if (apiKey) {\n          headers['Authorization'] = `Bearer ${apiKey}`;\n          helpers.log('Added API key to request headers');\n        }\n      } else {\n        helpers.warn('Credential not found:', credentialId);\n      }\n    } catch (error) {\n      helpers.error('Error loading credentials:', error);\n    }\n  }\n  \n  const bodyRaw = (method !== 'GET' && method !== 'DELETE') ? (typeof bodyValue === 'string' ? bodyValue : JSON.stringify(bodyValue || {})) : undefined;\n  \n  if (bodyRaw) {\n    helpers.log(`Request body: ${bodyRaw.substring(0, 200)}${bodyRaw.length > 200 ? '...' : ''}`);\n  }\n  \n  helpers.log('Sending request...');\n  const response = await fetch(url, { method, headers, body: bodyRaw });\n  \n  const contentType = response.headers.get('content-type') || '';\n  const contentDisposition = response.headers.get('content-disposition') || '';\n  \n  helpers.log(`Response status: ${response.status} ${response.statusText}`);\n  helpers.log(`Content-Type: ${contentType}`);\n  \n  const isBinary = responseType === 'binary' || (responseType === 'auto' && (\n    contentType.includes('application/octet-stream') ||\n    contentType.includes('application/pdf') ||\n    contentType.includes('application/zip') ||\n    contentType.includes('application/gzip') ||\n    contentType.includes('text/csv') ||\n    contentType.includes('image/') ||\n    contentType.includes('video/') ||\n    contentType.includes('audio/') ||\n    contentDisposition.includes('attachment')\n  ));\n  \n  let responseData;\n  \n  if (isBinary) {\n    helpers.log('Detected binary/file response');\n    \n    try {\n      const blob = await response.blob();\n      \n      // Extract filename from Content-Disposition header\n      let filename = `download_${Date.now()}`;\n      if (contentDisposition) {\n        // Use string methods instead of regex to avoid escaping issues\n        const filenamePart = contentDisposition.split(';').find(part => part.includes('filename='));\n        if (filenamePart) {\n          filename = filenamePart.split('=')[1].replaceAll('\"', '').replaceAll(\"'\", '').trim();\n        }\n      }\n      \n      // Store file using NEW file-storage system (with user isolation)\n      const fileRef = await helpers.storeFileFromBlob(blob, filename);\n      \n      responseData = {\n        type: 'file',\n        file: {\n          id: fileRef.id,\n          name: fileRef.name,\n          mimeType: fileRef.mimeType,\n          size: fileRef.size,\n          sizeFormatted: fileRef.sizeFormatted\n        }\n      };\n      helpers.log(`File stored with Firebase Storage: ${fileRef.name} (${fileRef.sizeFormatted})`);\n    } catch (fileError) {\n      helpers.error('Failed to store file:', fileError.message);\n      helpers.warn('Falling back to base64 encoding');\n      \n      const buffer = await response.arrayBuffer();\n      const base64 = Buffer.from(buffer).toString('base64');\n      const sizeKB = (buffer.byteLength / 1024).toFixed(2);\n      \n      responseData = {\n        type: 'binary',\n        contentType: contentType,\n        size: buffer.byteLength,\n        sizeFormatted: `${sizeKB} KB`,\n        base64: base64\n      };\n      helpers.log(`Received binary data: ${sizeKB} KB (base64 encoded)`);\n    }\n  } else if (responseType === 'text' || (responseType === 'auto' && !contentType.includes('application/json'))) {\n    responseData = await response.text();\n    helpers.log(`Received text response (${responseData.length} characters)`);\n  } else {\n    // Clone the response before consuming it, in case JSON parsing fails\n    const clonedResponse = response.clone();\n    try {\n      responseData = await response.json();\n      helpers.log('Received JSON response');\n    } catch (e) {\n      helpers.warn('Failed to parse as JSON, returning as text');\n      responseData = await clonedResponse.text();\n    }\n  }\n  \n  helpers.log('HTTP Request completed successfully');\n  \n  return {\n    status: response.status,\n    statusText: response.statusText,\n    data: responseData,\n    headers: Object.fromEntries(response.headers.entries()),\n    contentType: contentType\n  };\n  \n} catch (error) {\n  helpers.error('HTTP Request failed:', error.message);\n  helpers.error('Stack trace:', error.stack);\n  return {\n    error: 'HTTP Request failed',\n    message: error.message,\n    stack: error.stack\n  };\n}",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

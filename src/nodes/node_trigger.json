@@ -1,0 +1,47 @@
+{
+  "id": "node_trigger",
+  "version": "1.0",
+  "name": "Node Trigger",
+  "description": "A trigger that activates when called by a 'Call Node Trigger' node. Allows creating multiple sub-workflows within the same workflow.",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "3x1",
+  "color": "#9333EA",
+  "icon": "Workflow",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "triggerName",
+      "displayName": "Trigger Name",
+      "type": "string",
+      "default": "My Trigger",
+      "description": "A unique name to identify this trigger when calling it from other nodes"
+    },
+    {
+      "name": "description",
+      "displayName": "Description",
+      "type": "string",
+      "default": "",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "Optional description of what this trigger does"
+    }
+  ],
+  "executionCode": "try {\n  const triggerName = node.properties.triggerName?.value || 'Unnamed Trigger';\n  \n  helpers.log(`Node Trigger '${triggerName}' activated`);\n  helpers.log('Received data:', JSON.stringify(data));\n  \n  // Simply pass through the data received when this trigger was called\n  return data || { triggered: true, triggerName };\n  \n} catch (error) {\n  helpers.error('Node Trigger failed:', error.message);\n  return {\n    error: 'Node Trigger failed',\n    message: error.message\n  };\n}",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-19",
+    "updatedAt": "2025-10-19"
+  }
+}

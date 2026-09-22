@@ -1,0 +1,73 @@
+{
+  "id": "aggregate_node",
+  "version": "1.0",
+  "name": "Aggregate",
+  "description": "Perform aggregation operations like sum, average, count, etc.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#2563EB",
+  "icon": "Calculator",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input Array",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Result",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "field",
+      "displayName": "Field",
+      "type": "string",
+      "default": "value",
+      "ui": {
+        "component": "code"
+      }
+    },
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "sum",
+      "options": [
+        {
+          "value": "sum",
+          "label": "Sum"
+        },
+        {
+          "value": "avg",
+          "label": "Average"
+        },
+        {
+          "value": "count",
+          "label": "Count"
+        },
+        {
+          "value": "max",
+          "label": "Max"
+        },
+        {
+          "value": "min",
+          "label": "Min"
+        }
+      ]
+    }
+  ],
+  "executionCode": "const itemsToProcess = Array.isArray(data) ? data : (data && typeof data === 'object' ? Object.values(data).find(Array.isArray) || [] : []); if (itemsToProcess.length === 0) { return { result: 0 }; } const field = node.properties.field.value; const op = node.properties.operation.value; const values = itemsToProcess.map(i => Number(i[field]) || 0); let result; switch (op) { case 'sum': result = values.reduce((a, b) => a + b, 0); break; case 'avg': result = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0; break; case 'count': result = values.length; break; case 'max': result = values.length > 0 ? Math.max(...values) : 0; break; case 'min': result = values.length > 0 ? Math.min(...values) : 0; break; default: result = 0; } return { result };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "id": "ai_agent",
+  "version": "3.5",
+  "name": "AI Agent",
+  "description": "Agent LLM con tool-calling y memoria al estilo n8n. Conecta herramientas al puerto 'Tools', memoria al puerto 'Memory' y (opcional) un nodo de Modelo al puerto 'Model'.",
+  "group": "AI",
+  "category": "ai",
+  "shape": "5x3",
+  "color": "#0EA5E9",
+  "icon": "Bot",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Message",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    },
+    {
+      "id": "tools",
+      "label": "Tools",
+      "position": "bottom",
+      "type": "json",
+      "slot": 1,
+      "required": false
+    },
+    {
+      "id": "model",
+      "label": "Model",
+      "position": "bottom",
+      "type": "json",
+      "slot": 2,
+      "required": false
+    },
+    {
+      "id": "memory",
+      "label": "Memory",
+      "position": "bottom",
+      "type": "json",
+      "slot": 5,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "sepAuth",
+      "displayName": "Model & Auth",
+      "type": "separator"
+    },
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "credentials",
+      "options": [
+        {
+          "value": "credentials",
+          "label": "Use Credentials"
+        },
+        {
+          "value": "manual",
+          "label": "Manual API Key"
+        }
+      ]
+    },
+    {
+      "name": "credentials",
+      "displayName": "OpenAI Credentials",
+      "type": "credentials",
+      "placeholder": "Select OpenAI credentials...",
+      "typeOptions": {
+        "credentialType": "openAi"
+      },
+      "displayOptions": {
+        "show": {
+          "authentication": [
+            "credentials"
+          ]
+        }
+      }
+    },
+    {
+      "name": "apiKey",
+      "displayName": "API Key",
+      "type": "string",
+      "placeholder": "sk-...",
+      "displayOptions": {
+        "show": {
+          "authentication": [
+            "manual"
+          ]
+        }
+      }
+    },
+    {
+      "name": "model",
+      "displayName": "Model (fallback)",
+      "type": "options",
+      "default": "gpt-4o-mini",
+      "options": [
+        {
+          "value": "gpt-4o",
+          "label": "GPT-4o"
+        },
+        {
+          "value": "gpt-4o-mini",
+          "label": "GPT-4o Mini"
+        },
+        {
+          "value": "gpt-4-turbo",
+          "label": "GPT-4 Turbo"
+        },
+        {
+          "value": "gpt-3.5-turbo",
+          "label": "GPT-3.5 Turbo"
+        }
+      ],
+      "description": "Se usa si no hay modelo conectado al puerto Model"
+    },
+    {
+      "name": "systemPrompt",
+      "displayName": "System Instructions",
+      "type": "string",
+      "default": "You are a helpful AI agent that can use tools when needed.",
+      "ui": {
+        "component": "textarea"
+      }
+    },
+    {
+      "name": "temperature",
+      "displayName": "Temperature",
+      "type": "number",
+      "default": 0.7,
+      "validation": {
+        "min": 0,
+        "max": 2,
+        "step": 0.1
+      },
+      "ui": {
+        "component": "slider"
+      }
+    },
+    {
+      "name": "maxTokens",
+      "displayName": "Max Tokens",
+      "type": "number",
+      "default": 1000
+    },
+    {
+      "name": "sepTools",
+      "displayName": "Tools & Memory",
+      "type": "separator"
+    },
+    {
+      "name": "toolsNotice",
+      "displayName": "Tools Configuration",
+      "type": "notice",
+      "default": "Conecta nodos Tool al puerto 'Tools' o pásalos por entrada."
+    },
+    {
+      "name": "memoryNotice",
+      "displayName": "Memory Configuration",
+      "type": "notice",
+      "default": "Conecta un nodo Memory al puerto 'Memory', o usa input.history (Chat Trigger)."
+    },
+    {
+      "name": "historyWindow",
+      "displayName": "History Window",
+      "type": "number",
+      "default": 10,
+      "description": "Número de pares user+assistant a cargar del historial"
+    },
+    {
+      "name": "toolChoice",
+      "displayName": "Tool Choice",
+      "type": "options",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Auto"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "description": "Forzar no usar herramientas o permitir auto tool-calling"
+    },
+    {
+      "name": "jsonMode",
+      "displayName": "JSON Mode",
+      "type": "boolean",
+      "default": false,
+      "description": "Forzar respuestas JSON cuando el modelo lo soporte"
+    },
+    {
+      "name": "maxIterations",
+      "displayName": "Max Tool Iterations",
+      "type": "number",
+      "default": 4
+    },
+    {
+      "name": "autoSave",
+      "displayName": "Auto Save Conversation",
+      "type": "boolean",
+      "default": true,
+      "description": "Persist user and assistant messages to chat storage when chatId/sessionId are present. Skips if request already persisted via API."
+    }
+  ],
+  "executionCode": "try {\nconst doFetch = (typeof globalThis !== 'undefined' && globalThis.fetch) ? globalThis.fetch.bind(globalThis) : (await import('node-fetch')).default;\nconst auth = node.properties.authentication?.value || 'credentials';\nconst credentialId = node.properties.credentials?.value;\nconst manualApiKey = node.properties.apiKey?.value;\nconst model = node.properties.model?.value || 'gpt-4o-mini';\nconst systemPrompt = node.properties.systemPrompt?.value || '';\nconst temperature = node.properties.temperature?.value ?? 0.7;\nconst maxTokens = parseInt(node.properties.maxTokens?.value || 1000);\nconst maxIterations = parseInt(node.properties.maxIterations?.value || 4);\nconst historyWindow = parseInt(node.properties.historyWindow?.value || 10);\nconst toolChoice = node.properties.toolChoice?.value || 'auto';\nconst jsonMode = node.properties.jsonMode?.value === true;\n\nhelpers.log('[AI Agent] Starting execution');\n\nlet apiKey = null;\nhelpers.log(`[AI Agent] Authentication mode: ${auth}`);\nhelpers.log(`[AI Agent] Credential ID: ${credentialId || 'none'}`);\nhelpers.log(`[AI Agent] Has getCredentialData helper: ${typeof helpers?.getCredentialData === 'function'}`);\n\nif (auth === 'credentials') {\n  if (credentialId && typeof helpers?.getCredentialData === 'function') {\n    helpers.log(`[AI Agent] Attempting to load credential: ${credentialId}`);\n    const credData = await helpers.getCredentialData(credentialId);\n    helpers.log(`[AI Agent] Credential data received: ${credData ? 'yes' : 'no'}`);\n    if (credData) {\n      helpers.log(`[AI Agent] Credential data keys: ${Object.keys(credData).join(', ')}`);\n    }\n    apiKey = credData?.apiKey || null;\n    helpers.log(`[AI Agent] API key extracted: ${apiKey ? 'yes (length: ' + apiKey.length + ')' : 'no'}`);\n  } else {\n    if (!credentialId) {\n      helpers.warn('[AI Agent] No credential ID provided');\n    }\n    if (typeof helpers?.getCredentialData !== 'function') {\n      helpers.warn('[AI Agent] getCredentialData helper not available');\n    }\n    if (env?.OPENAI_API_KEY) {\n      helpers.log('[AI Agent] Fallback to env.OPENAI_API_KEY');\n      apiKey = env.OPENAI_API_KEY;\n    }\n  }\n} else if (auth === 'manual') {\n  helpers.log('[AI Agent] Using manual API key');\n  apiKey = manualApiKey;\n  helpers.log(`[AI Agent] Manual API key: ${apiKey ? 'provided' : 'not provided'}`);\n}\n\nhelpers.log(`[AI Agent] Final API key status: ${apiKey ? 'available' : 'NOT AVAILABLE'}`);\n\nconst mainInput = $input.first() || {};\nlet toolsInput = (mainInput?.__ports?.tools) || (execution['Tools']?.output);\nlet memoryInput = (mainInput?.__ports?.memory) || (execution['Memory']?.output);\nlet modelInput = (mainInput?.__ports?.model) || (execution['Model']?.output);\n\nhelpers.log(`Memory input source: ${memoryInput ? (mainInput?.__ports?.memory ? '__ports.memory' : 'execution.Memory') : 'none'}`);\nif (memoryInput) {\n  helpers.log(`Memory input type: ${typeof memoryInput}, has messages: ${Array.isArray(memoryInput.messages)}`);\n  if (memoryInput.messages) {\n    helpers.log(`Memory messages count: ${memoryInput.messages.length}`);\n  }\n}\n\nif (!memoryInput && Array.isArray(mainInput?.messages)) {\n  memoryInput = mainInput;\n  helpers.log('Using mainInput.messages as memory');\n}\n\nif (toolsInput && !Array.isArray(toolsInput)) {\n  toolsInput = [toolsInput];\n} else if (!toolsInput) {\n  toolsInput = [];\n}\n\nlet provider = 'openai';\nlet endpoint = 'https://api.openai.com/v1/chat/completions';\nlet modelName = model;\n\nif (modelInput) {\n  if (modelInput.provider) provider = String(modelInput.provider);\n  if (modelInput.model) modelName = String(modelInput.model);\n  if (provider === 'openai') {\n    if (modelInput.apiKey) apiKey = modelInput.apiKey;\n    else if (modelInput.credentialId && typeof helpers?.getCredentialData === 'function') {\n      const c = await helpers.getCredentialData(modelInput.credentialId);\n      if (c?.apiKey) apiKey = c.apiKey;\n    }\n    if (modelInput.endpoint) endpoint = String(modelInput.endpoint);\n  }\n}\n\nif (!apiKey) {\n  helpers.error('No API key provided');\n  return { error: 'No API key provided' };\n}\n\nconst userMessage = mainInput.message || mainInput.prompt || mainInput.text || JSON.stringify(mainInput);\nconst chatId = mainInput.chatId || mainInput.chat?.id;\nconst sessionId = mainInput.sessionId || 'default';\n\nhelpers.log(`Model provider: ${provider}, model: ${modelName}`);\nhelpers.log(`Tool choice: ${toolChoice}, tools connected: ${Array.isArray(toolsInput)?toolsInput.length:0}`);\nhelpers.log(`User message: ${String(userMessage).substring(0, 100)}...`);\nhelpers.log(`Chat ID: ${chatId || 'none'}, Session: ${sessionId}`);\n\nconst messages = [];\nif (systemPrompt) {\n  messages.push({ role: 'system', content: systemPrompt });\n  helpers.log('System prompt added');\n}\n\nlet memLoaded = 0;\n\n// Priority 1: Memory node connected\nif (memoryInput && Array.isArray(memoryInput.messages)) {\n  for (const msg of memoryInput.messages) {\n    if (msg?.role && msg?.content) {\n      messages.push({ role: msg.role, content: String(msg.content) });\n      memLoaded++;\n    }\n  }\n  helpers.log(`Loaded ${memLoaded} messages from Memory input`);\n}\n// Priority 2: Chat Trigger history (mainInput.history)\nelse if (mainInput?.history && (Array.isArray(mainInput.history.user) || Array.isArray(mainInput.history.agent))) {\n  try {\n    const userHist = Array.isArray(mainInput.history.user) ? mainInput.history.user : [];\n    const agentHist = Array.isArray(mainInput.history.agent) ? mainInput.history.agent : [];\n    const maxLen = Math.max(userHist.length, agentHist.length);\n    const start = Math.max(0, maxLen - historyWindow);\n\n    for (let i = start; i < maxLen; i++) {\n      const u = userHist[i];\n      const a = agentHist[i];\n      if (u !== undefined) {\n        messages.push({ role: 'user', content: String(u) });\n        memLoaded++;\n      }\n      if (a !== undefined) {\n        messages.push({ role: 'assistant', content: String(a) });\n        memLoaded++;\n      }\n    }\n    helpers.log(`Loaded ${memLoaded} messages from input.history`);\n  } catch (e) {\n    helpers.warn('Failed to load history from input:', e?.message || e);\n  }\n}\n// Priority 3: Session Memory from execution context\nelse if (execution['__sessionMemory'] && execution['__sessionMemory'][sessionId]) {\n  try {\n    const sessionMessages = execution['__sessionMemory'][sessionId];\n    if (Array.isArray(sessionMessages)) {\n      // Apply history window\n      const startIdx = Math.max(0, sessionMessages.length - (historyWindow * 2));\n      const recentMessages = sessionMessages.slice(startIdx);\n\n      for (const msg of recentMessages) {\n        if (msg?.role && msg?.content) {\n          messages.push({ role: msg.role, content: String(msg.content) });\n          memLoaded++;\n        }\n      }\n      helpers.log(`Loaded ${memLoaded} messages from __sessionMemory`);\n    }\n  } catch (e) {\n    helpers.warn('Failed to load from __sessionMemory:', e?.message || e);\n  }\n}\n// Priority 4: Scan execution context for memory outputs\nelse {\n  try {\n    const keys = Object.keys(execution || {});\n    for (let i = keys.length - 1; i >= 0; i--) {\n      const out = execution[keys[i]]?.output;\n      if (out && Array.isArray(out.messages)) {\n        for (const msg of out.messages) {\n          if (msg?.role && msg?.content) {\n            messages.push({ role: msg.role, content: String(msg.content) });\n            memLoaded++;\n          }\n        }\n        break;\n      }\n    }\n    if (memLoaded > 0) {\n      helpers.log(`Loaded ${memLoaded} messages from execution context memory`);\n    } else {\n      helpers.log('No memory provided - starting fresh conversation');\n    }\n  } catch (e) {\n    helpers.warn('Failed to scan execution context for memory:', e?.message || e);\n  }\n}\n\nmessages.push({ role: 'user', content: String(userMessage || '') });\n\nconst toolSpecs = [];\nconst toolsMap = {};\n\nif (toolsInput.length > 0 && toolChoice !== 'none') {\n  for (const tool of toolsInput) {\n    if (tool && tool.name && tool.enabled !== false) {\n      let schema = tool.schema;\n      if (typeof schema === 'string') {\n        try { schema = JSON.parse(schema); } catch { schema = null; }\n      }\n      if (!schema || typeof schema !== 'object') {\n        schema = { type: 'object', properties: {} };\n      }\n\n      toolSpecs.push({\n        type: 'function',\n        function: {\n          name: tool.name,\n          description: tool.description || '',\n          parameters: schema\n        }\n      });\n\n      toolsMap[tool.name] = {\n        code: tool.code || '',\n        schema,\n        executor: tool.executor\n      };\n    }\n  }\n  helpers.log(`Registered ${toolSpecs.length} tools`);\n} else if (toolChoice === 'none') {\n  helpers.log('Tools disabled by configuration');\n} else {\n  helpers.log('No tools connected - agent will respond without tool calling');\n}\n\nasync function callLLM(payload) {\n  if (provider === 'openai') {\n    const res = await doFetch(endpoint, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'Authorization': `Bearer ${apiKey}`\n      },\n      body: JSON.stringify(payload)\n    });\n\n    const json = await res.json();\n    if (!res.ok) return { error: 'OpenAI API error', status: res.status, details: json };\n    return { data: json };\n  } else {\n    return { error: `Unsupported provider: ${provider}` };\n  }\n}\n\nconst usedTools = [];\nlet lastResponse = null;\nlet iterations = 0;\n\nhelpers.log('Starting tool-calling loop...');\n\nwhile (iterations++ < maxIterations) {\n  helpers.log(`Iteration ${iterations}/${maxIterations}`);\n\n  const payload = { model: modelName, messages, temperature, max_tokens: maxTokens };\n\n  if (toolSpecs.length > 0 && toolChoice !== 'none') {\n    payload.tools = toolSpecs;\n    payload.tool_choice = 'auto';\n  }\n\n  if (jsonMode && provider === 'openai') {\n    payload.response_format = { type: 'json_object' };\n  }\n\n  const resp = await callLLM(payload);\n  if (resp.error) {\n    helpers.error(`LLM error: ${JSON.stringify(resp.error)}`);\n    return resp;\n  }\n\n  const result = resp.data;\n  lastResponse = result;\n  const choice = result.choices && result.choices[0];\n  const assistantMsg = choice?.message || {};\n\n  if (assistantMsg.tool_calls && assistantMsg.tool_calls.length > 0 && toolSpecs.length > 0 && toolChoice !== 'none') {\n    messages.push({\n      role: 'assistant',\n      content: assistantMsg.content || null,\n      tool_calls: assistantMsg.tool_calls\n    });\n\n    for (const tc of assistantMsg.tool_calls) {\n      const tName = tc.function?.name;\n      const argsJson = tc.function?.arguments || '{}';\n\n      let args;\n      try { args = JSON.parse(argsJson); } catch { args = { _raw: argsJson }; }\n\n      let output = '';\n      const toolDef = toolsMap[tName];\n\n      if (toolDef) {\n        try {\n          let r;\n          if (toolDef.executor && typeof toolDef.executor === 'function') {\n            r = await toolDef.executor(args, helpers, modules, require, env, mainInput);\n          } else if (toolDef.code) {\n            const AsyncFn = Object.getPrototypeOf(async function(){}).constructor;\n            const toolFn = new AsyncFn('args','helpers','modules','require','env','data', toolDef.code);\n            r = await toolFn(args, helpers, modules, require, env, mainInput);\n          } else {\n            throw new Error('Tool has no code or executor');\n          }\n\n          output = typeof r === 'string' ? r : JSON.stringify(r);\n        } catch (e) {\n          output = JSON.stringify({ error: String(e?.message || e) });\n        }\n      } else {\n        output = JSON.stringify({ error: `Tool not found: ${tName}` });\n      }\n\n      usedTools.push({\n        name: tName,\n        args,\n        outputPreview: String(output).slice(0, 200)\n      });\n\n      messages.push({\n        role: 'tool',\n        tool_call_id: tc.id,\n        content: String(output)\n      });\n    }\n\n    continue;\n  } else {\n    const content = assistantMsg.content || '';\n\n    // Save to session memory\n    try {\n      if (!execution['__sessionMemory']) execution['__sessionMemory'] = {};\n      if (!execution['__sessionMemory'][sessionId]) execution['__sessionMemory'][sessionId] = [];\n\n      execution['__sessionMemory'][sessionId].push({\n        role: 'user',\n        content: String(userMessage || '')\n      });\n\n      execution['__sessionMemory'][sessionId].push({\n        role: 'assistant',\n        content: String(content || '')\n      });\n\n      helpers.log(`Saved conversation to __sessionMemory[${sessionId}], total messages: ${execution['__sessionMemory'][sessionId].length}`);\n    } catch (e) {\n      helpers.warn('Failed to save to __sessionMemory:', e?.message || e);\n    }\n\n    return {\n      message: content,\n      raw: lastResponse,\n      tools: usedTools,\n      metadata: {\n        model: modelName,\n        provider,\n        iterations,\n        toolsUsed: usedTools.length,\n        chatId,\n        sessionId\n      }\n    };\n  }\n}\n\n// Max iterations reached - still save user message\ntry {\n  if (!execution['__sessionMemory']) execution['__sessionMemory'] = {};\n  if (!execution['__sessionMemory'][sessionId]) execution['__sessionMemory'][sessionId] = [];\n  execution['__sessionMemory'][sessionId].push({\n    role: 'user',\n    content: String(userMessage || '')\n  });\n} catch {}\n\nreturn { error: 'Max tool iterations reached without final answer', tools: usedTools };\n\n} catch (error) {\n  return {\n    error: 'AI Agent failed',\n    message: error?.message || String(error),\n    stack: error?.stack\n  };\n}",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-29",
+    "updatedAt": "2025-10-31"
+  }
+}

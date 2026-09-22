@@ -1,0 +1,145 @@
+{
+  "id": "error_handler_node",
+  "version": "1.0",
+  "name": "Error Handler",
+  "description": "Handle errors with retry logic, fallback values, and custom error responses.",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#EF4444",
+  "icon": "AlertTriangle",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "left",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "outputs": [
+    {
+      "id": "success",
+      "label": "Success",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "fallback",
+      "label": "Fallback",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    },
+    {
+      "id": "error",
+      "label": "Error",
+      "position": "right",
+      "type": "any",
+      "slot": 3
+    }
+  ],
+  "properties": [
+    {
+      "name": "mode",
+      "displayName": "Error Handling Mode",
+      "type": "options",
+      "default": "continue",
+      "required": true,
+      "options": [
+        {
+          "id": "mode-continue",
+          "label": "Continue with Fallback",
+          "value": "continue"
+        },
+        {
+          "id": "mode-stop",
+          "label": "Stop Workflow",
+          "value": "stop"
+        },
+        {
+          "id": "mode-retry",
+          "label": "Retry Operation",
+          "value": "retry"
+        },
+        {
+          "id": "mode-log",
+          "label": "Log and Pass Through",
+          "value": "log"
+        }
+      ]
+    },
+    {
+      "name": "retryAttempts",
+      "displayName": "Retry Attempts",
+      "type": "number",
+      "default": 3,
+      "description": "Number of times to retry before failing",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "retry"
+          ]
+        }
+      }
+    },
+    {
+      "name": "retryDelay",
+      "displayName": "Retry Delay (ms)",
+      "type": "number",
+      "default": 1000,
+      "description": "Milliseconds to wait between retries",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "retry"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fallbackValue",
+      "displayName": "Fallback Value",
+      "type": "json",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{}",
+      "description": "Default value to use if error occurs",
+      "displayOptions": {
+        "show": {
+          "mode": [
+            "continue"
+          ]
+        }
+      }
+    },
+    {
+      "name": "errorMessage",
+      "displayName": "Custom Error Message",
+      "type": "string",
+      "default": "",
+      "description": "Custom error message to include in output"
+    },
+    {
+      "name": "captureStackTrace",
+      "displayName": "Capture Stack Trace",
+      "type": "boolean",
+      "default": true,
+      "description": "Include full stack trace in error output"
+    }
+  ],
+  "executionCode": "const mode = node.properties.mode.value;\nconst retryAttempts = node.properties.retryAttempts?.value || 3;\nconst retryDelay = node.properties.retryDelay?.value || 1000;\nlet fallbackValue = node.properties.fallbackValue?.value || '{}';\nconst errorMessage = node.properties.errorMessage?.value || '';\nconst captureStackTrace = node.properties.captureStackTrace?.value !== false;\n\n// Parse fallback value if it's a string\nif (typeof fallbackValue === 'string' && fallbackValue.trim()) {\n  try {\n    fallbackValue = JSON.parse(fallbackValue);\n  } catch (e) {\n    fallbackValue = { value: fallbackValue };\n  }\n}\n\n// Check if data contains an error\nconst hasError = data?.error || data?.path === 'error';\n\nhelpers.log(`Error Handler mode: ${mode}, Has Error: ${hasError}`);\n\nif (!hasError) {\n  // No error, pass through\n  return {\n    path: 'success',\n    ...data\n  };\n}\n\n// Error detected\nconst errorInfo = {\n  originalError: data.error || 'Unknown error',\n  errorCode: data.code,\n  errorDetails: data.details,\n  timestamp: new Date().toISOString(),\n  nodeId: node.id,\n  customMessage: errorMessage\n};\n\nif (captureStackTrace && data.stack) {\n  errorInfo.stackTrace = data.stack;\n}\n\nswitch (mode) {\n  case 'continue':\n    helpers.log('Continuing with fallback value');\n    return {\n      path: 'fallback',\n      ...fallbackValue,\n      _errorInfo: errorInfo,\n      _handledError: true\n    };\n  \n  case 'stop':\n    helpers.error('Stopping workflow due to error');\n    return {\n      path: 'error',\n      error: errorMessage || errorInfo.originalError,\n      errorInfo,\n      stopped: true\n    };\n  \n  case 'retry':\n    helpers.warn(`Retry mode not implemented in current execution context. Returning error.`);\n    return {\n      path: 'error',\n      error: 'Retry logic requires workflow engine support',\n      errorInfo,\n      retryAttempts,\n      retryDelay\n    };\n  \n  case 'log':\n    helpers.log('Logging error and passing through:', errorInfo);\n    return {\n      path: 'success',\n      ...data,\n      _errorLogged: errorInfo\n    };\n  \n  default:\n    return {\n      path: 'error',\n      error: 'Invalid error handling mode',\n      errorInfo\n    };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}

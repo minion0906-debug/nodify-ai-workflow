@@ -1,0 +1,77 @@
+{
+  "id": "slack_message",
+  "version": "1.0",
+  "name": "Slack Message",
+  "description": "Send a message to a Slack channel using a Bot Token.",
+  "group": "Actions",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#4F46E5",
+  "icon": "MessageSquare",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "authentication",
+      "displayName": "Authentication",
+      "type": "options",
+      "default": "credentials",
+      "options": [
+        { "value": "credentials", "label": "Use Credentials" },
+        { "value": "manual", "label": "Manual Token" }
+      ]
+    },
+    {
+      "name": "credentials",
+      "displayName": "Slack Credentials",
+      "type": "credentials",
+      "placeholder": "Select Slack credentials...",
+      "typeOptions": { "credentialType": "slack" },
+      "displayOptions": { "show": { "authentication": ["credentials"] } }
+    },
+    {
+      "name": "token",
+      "displayName": "Slack Bot Token",
+      "type": "string",
+      "required": true,
+      "displayOptions": { "show": { "authentication": ["manual"] } }
+    },
+    {
+      "name": "channel",
+      "displayName": "Channel",
+      "type": "options",
+      "default": "",
+      "options": []
+    },
+    {
+      "name": "message",
+      "displayName": "Message",
+      "type": "string",
+      "default": "Hello from Nodify!"
+    }
+  ],
+  "executionCode": "try {\n  const fetch = (await import('node-fetch')).default;\n  const auth = node.properties.authentication?.value || 'credentials';\n  const credentialId = node.properties.credentials?.value;\n  const manualToken = node.properties.token?.value;\n  const channel = node.properties.channel?.value;\n  const text = node.properties.message?.value || '';\n\n  let token = null;\n  if (auth === 'credentials' && credentialId) {\n    if (typeof helpers.getCredentialData === 'function') {\n      const cred = await helpers.getCredentialData(credentialId);\n      token = cred?.botToken || cred?.apiKey || null;\n    }\n    if (!token && services) {\n      const snap = await services.getDoc(services.doc(services.db, 'users', services.user.uid, 'credentials', credentialId));\n      if (snap.exists()) {\n        const data = snap.data();\n        token = data?.data?.botToken || data?.data?.apiKey || null;\n      }\n    }\n  } else if (auth === 'manual') {\n    token = manualToken;\n  }\n  if (!token) {\n    return { success: false, error: 'No Slack token provided' };\n  }\n\n  const response = await fetch('https://slack.com/api/chat.postMessage', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },\n    body: JSON.stringify({ channel, text })\n  });\n  const result = await response.json();\n  return { success: result.ok, ts: result.ts, channel, raw: result };\n} catch (e) {\n  return { success: false, error: e.message, stack: e.stack };\n}\n",
+  "dynamicCode": {
+    "loadOptions": "let token = null;\nconst auth = node.properties.authentication?.value || 'credentials';\nif (auth === 'credentials' && node.properties.credentials?.value && typeof helpers.getCredentialData === 'function') {\n  const cred = await helpers.getCredentialData(node.properties.credentials.value);\n  token = cred?.botToken || cred?.apiKey || null;\n} else if (auth === 'manual') {\n  token = node.properties.token?.value;\n}\nif (!token) return [];\nconst res = await fetch('https://slack.com/api/conversations.list', { headers: { Authorization: `Bearer ${token}` } });\nconst data = await res.json();\nreturn (data.channels || []).map(c => ({ value: c.id, label: c.name }));"
+  },
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

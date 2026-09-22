@@ -1,0 +1,76 @@
+{
+  "id": "whatsapp-send-template",
+  "version": "1.0",
+  "name": "Send template",
+  "description": "Send a pre-approved template message",
+  "group": "Social Media",
+  "subGroup": "WhatsApp",
+  "category": "action",
+  "shape": "circle",
+  "color": "#25D366",
+  "icon": "FileText",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "credential",
+      "displayName": "Access Token",
+      "type": "credentials",
+      "required": true
+    },
+    {
+      "name": "phoneNumberId",
+      "displayName": "Phone Number ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "recipientPhone",
+      "displayName": "To",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "templateName",
+      "displayName": "Template Name",
+      "type": "string",
+      "required": true,
+      "placeholder": "hello_world"
+    },
+    {
+      "name": "language",
+      "displayName": "Language Code",
+      "type": "string",
+      "default": "en_US",
+      "placeholder": "en_US"
+    },
+    {
+      "name": "parameters",
+      "displayName": "Parameters (JSON)",
+      "type": "json",
+      "description": "Template parameters as JSON array"
+    }
+  ],
+  "executionCode": "try {\\n  helpers.log('WhatsApp - Send Template: Starting');\\n\\n  const accessToken = node.properties.credential.value;\\n  const phoneNumberId = node.properties.phoneNumberId.value;\\n  const to = node.properties.recipientPhone.value;\\n  const templateName = node.properties.templateName.value;\\n  const language = node.properties.language.value || 'en_US';\\n  const parametersStr = node.properties.parameters.value;\\n\\n  let components = [];\\n  if (parametersStr) {\\n    try {\\n      const params = JSON.parse(parametersStr);\\n      if (Array.isArray(params) && params.length > 0) {\\n        components = [{\\n          type: 'body',\\n          parameters: params.map(p => ({ type: 'text', text: String(p) }))\\n        }];\\n      }\\n    } catch (e) {\\n      helpers.warn('Invalid parameters JSON, sending without parameters');\\n    }\\n  }\\n\\n  const endpoint = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;\\n  const payload = {\\n    messaging_product: 'whatsapp',\\n    to: to,\\n    type: 'template',\\n    template: {\\n      name: templateName,\\n      language: { code: language },\\n      components: components\\n    }\\n  };\\n\\n  helpers.log('Sending template:', templateName);\\n\\n  const response = await fetch(endpoint, {\\n    method: 'POST',\\n    headers: {\\n      'Authorization': `Bearer ${accessToken}`,\\n      'Content-Type': 'application/json'\\n    },\\n    body: JSON.stringify(payload)\\n  });\\n\\n  const result = await response.json();\\n\\n  if (!response.ok) {\\n    helpers.error('API Error:', result.error?.message);\\n    throw new Error(`WhatsApp API Error: ${result.error?.message || 'Unknown'}`);\\n  }\\n\\n  helpers.log('Template sent. Message ID:', result.messages?.[0]?.id);\\n\\n  return { ...data, messageId: result.messages?.[0]?.id, whatsapp: result };\\n\\n} catch (error) {\\n  helpers.error('Failed:', error.message);\\n  throw error;\\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-24",
+    "updatedAt": "2025-10-24"
+  }
+}

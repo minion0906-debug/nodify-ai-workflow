@@ -1,0 +1,79 @@
+{
+  "id": "toast_node",
+  "version": "1.0",
+  "name": "Toast Notification",
+  "description": "Shows a toast notification in the browser UI.",
+  "group": "Layout",
+  "category": "action",
+  "shape": "2x2",
+  "color": "#8B5CF6",
+  "icon": "MessageSquare",
+  "executionEnvironment": "client",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "title",
+      "displayName": "Title",
+      "type": "string",
+      "default": "Notification",
+      "required": true,
+      "description": "The title of the toast notification."
+    },
+    {
+      "name": "description",
+      "displayName": "Description",
+      "type": "string",
+      "default": "",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "Optional description text for the toast."
+    },
+    {
+      "name": "variant",
+      "displayName": "Variant",
+      "type": "options",
+      "default": "default",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "destructive",
+          "label": "Error/Destructive"
+        }
+      ],
+      "description": "The style variant of the toast."
+    },
+    {
+      "name": "includeData",
+      "displayName": "Include Data in Description",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, appends the input data to the description."
+    }
+  ],
+  "clientExecutionCode": "const title = node.properties.title.value || 'Notification';\nlet description = node.properties.description.value || '';\nconst variant = node.properties.variant.value || 'default';\nconst includeData = node.properties.includeData.value;\n\nif (includeData && data) {\n  const dataStr = JSON.stringify(data, null, 2);\n  description = description ? description + '\\n\\n' + dataStr : dataStr;\n}\n\n// Show toast notification\nhelpers.toast({\n  title: title,\n  description: description || undefined,\n  variant: variant\n});\n\n// Return data to continue workflow\nreturn {\n  ...data,\n  toastShown: true,\n  toastTitle: title\n};",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-12"
+  }
+}

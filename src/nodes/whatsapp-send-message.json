@@ -1,0 +1,76 @@
+{
+  "id": "whatsapp-send-message",
+  "version": "1.0",
+  "name": "Send message",
+  "description": "Send a text message to a WhatsApp user",
+  "group": "Social Media",
+  "subGroup": "WhatsApp",
+  "category": "action",
+  "shape": "circle",
+  "color": "#25D366",
+  "icon": "MessageCircle",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "credential",
+      "displayName": "Access Token",
+      "type": "credentials",
+      "required": true,
+      "description": "WhatsApp Business API access token"
+    },
+    {
+      "name": "phoneNumberId",
+      "displayName": "Phone Number ID",
+      "type": "string",
+      "required": true,
+      "placeholder": "123456789012345",
+      "description": "Your WhatsApp Business Phone Number ID"
+    },
+    {
+      "name": "recipientPhone",
+      "displayName": "To",
+      "type": "string",
+      "required": true,
+      "placeholder": "+1234567890",
+      "description": "Recipient phone number (international format)"
+    },
+    {
+      "name": "message",
+      "displayName": "Message",
+      "type": "string",
+      "required": true,
+      "placeholder": "Hello from Nodify!",
+      "description": "Text message to send"
+    },
+    {
+      "name": "previewUrl",
+      "displayName": "Preview URL",
+      "type": "boolean",
+      "default": false,
+      "description": "Enable URL preview in message"
+    }
+  ],
+  "executionCode": "try {\\n  helpers.log('WhatsApp - Send Message: Starting execution');\\n\\n  const accessToken = node.properties.credential.value;\\n  const phoneNumberId = node.properties.phoneNumberId.value;\\n  const to = node.properties.recipientPhone.value;\\n  const messageText = node.properties.message.value;\\n  const previewUrl = node.properties.previewUrl.value || false;\\n\\n  if (!accessToken || !phoneNumberId || !to || !messageText) {\\n    helpers.error('Missing required fields');\\n    throw new Error('Access Token, Phone Number ID, Recipient and Message are required');\\n  }\\n\\n  helpers.log('Sending to:', to);\\n\\n  const endpoint = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;\\n  const payload = {\\n    messaging_product: 'whatsapp',\\n    recipient_type: 'individual',\\n    to: to,\\n    type: 'text',\\n    text: {\\n      preview_url: previewUrl,\\n      body: messageText\\n    }\\n  };\\n\\n  const response = await fetch(endpoint, {\\n    method: 'POST',\\n    headers: {\\n      'Authorization': `Bearer ${accessToken}`,\\n      'Content-Type': 'application/json'\\n    },\\n    body: JSON.stringify(payload)\\n  });\\n\\n  const result = await response.json();\\n\\n  if (!response.ok) {\\n    const errorMsg = result.error?.message || JSON.stringify(result);\\n    helpers.error('WhatsApp API Error:', errorMsg);\\n    throw new Error(`WhatsApp API Error: ${errorMsg}`);\\n  }\\n\\n  helpers.log('Message sent successfully. ID:', result.messages?.[0]?.id);\\n\\n  return {\\n    ...data,\\n    messageId: result.messages?.[0]?.id,\\n    whatsapp: result\\n  };\\n\\n} catch (error) {\\n  helpers.error('Execution failed:', error.message);\\n  throw error;\\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-24",
+    "updatedAt": "2025-10-24"
+  }
+}

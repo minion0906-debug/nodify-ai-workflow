@@ -1,0 +1,184 @@
+{
+  "id": "dataStore",
+  "version": "1.0",
+  "name": "Data Operations",
+  "description": "Perform advanced table operations on arrays of objects, including filtering, grouping, mapping, and aggregation.",
+  "group": "Data",
+  "category": "data",
+  "shape": "2x2",
+  "color": "#0EA5E9",
+  "icon": "Table2",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "filter",
+      "required": true,
+      "options": [
+        {
+          "id": "op-filter",
+          "label": "Filter Rows",
+          "value": "filter"
+        },
+        {
+          "id": "op-map",
+          "label": "Map Fields",
+          "value": "map"
+        },
+        {
+          "id": "op-group",
+          "label": "Group By",
+          "value": "group"
+        },
+        {
+          "id": "op-aggregate",
+          "label": "Aggregate",
+          "value": "aggregate"
+        },
+        {
+          "id": "op-sort",
+          "label": "Sort",
+          "value": "sort"
+        }
+      ]
+    },
+    {
+      "name": "field",
+      "displayName": "Field",
+      "type": "string",
+      "ui": {
+        "component": "code"
+      },
+      "placeholder": "age",
+      "description": "Field to use for filtering, sorting, or grouping.",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "filter",
+            "sort",
+            "group",
+            "aggregate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "condition",
+      "displayName": "Condition",
+      "type": "string",
+      "ui": {
+        "component": "code"
+      },
+      "placeholder": "> 25",
+      "description": "Expression for filtering (e.g. > 25, === 'US').",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "filter"
+          ]
+        }
+      }
+    },
+    {
+      "name": "mapExpression",
+      "displayName": "Mapping Expression",
+      "type": "javascript",
+      "placeholder": "return { name: item.name.toUpperCase() };",
+      "description": "JS expression to transform each item.",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "map"
+          ]
+        }
+      }
+    },
+    {
+      "name": "aggregateFunction",
+      "displayName": "Aggregate Function",
+      "type": "options",
+      "default": "sum",
+      "options": [
+        {
+          "id": "agg-sum",
+          "label": "Sum",
+          "value": "sum"
+        },
+        {
+          "id": "agg-avg",
+          "label": "Average",
+          "value": "avg"
+        },
+        {
+          "id": "agg-count",
+          "label": "Count",
+          "value": "count"
+        },
+        {
+          "id": "agg-min",
+          "label": "Min",
+          "value": "min"
+        },
+        {
+          "id": "agg-max",
+          "label": "Max",
+          "value": "max"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "aggregate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "sortOrder",
+      "displayName": "Sort Order",
+      "type": "options",
+      "default": "asc",
+      "options": [
+        {
+          "id": "sort-asc",
+          "label": "Ascending",
+          "value": "asc"
+        },
+        {
+          "id": "sort-desc",
+          "label": "Descending",
+          "value": "desc"
+        }
+      ],
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "sort"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "const items = Array.isArray(data) ? data : (data ? [data] : []);\nconst operation = node.properties.operation.value;\n\n// Helper: safe JS evaluation for conditions\nconst safeEval = (expr, item) => {\n  try {\n    const fn = new Function('item', `return (${expr});`);\n    return fn(item);\n  } catch (err) {\n    return false;\n  }\n};\n\nswitch (operation) {\n  case 'filter': {\n    const field = node.properties.field.value;\n    const condition = node.properties.condition.value || 'true';\n    const expr = `item['${field}'] ${condition}`;\n    return items.filter(item => safeEval(expr, item));\n  }\n\n  case 'map': {\n    const expression = node.properties.mapExpression.value || 'return item;';\n    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;\n    const mapper = new AsyncFunction('item', expression);\n    const result = await Promise.all(items.map(i => mapper(i)));\n    return result;\n  }\n\n  case 'group': {\n    const field = node.properties.field.value;\n    const groups = {};\n    for (const item of items) {\n      const key = item[field];\n      if (!groups[key]) groups[key] = [];\n      groups[key].push(item);\n    }\n    return Object.entries(groups).map(([key, group]) => ({ key, group }));\n  }\n\n  case 'aggregate': {\n    const field = node.properties.field.value;\n    const func = node.properties.aggregateFunction.value;\n    const values = items.map(i => Number(i[field]) || 0);\n    const sum = values.reduce((a, b) => a + b, 0);\n    switch (func) {\n      case 'sum': return { sum };\n      case 'avg': return { avg: values.length > 0 ? sum / values.length : 0 };\n      case 'count': return { count: values.length };\n      case 'min': return { min: Math.min(...values) };\n      case 'max': return { max: Math.max(...values) };\n      default: return { sum };\n    }\n  }\n\n  case 'sort': {\n    const field = node.properties.field.value;\n    const order = node.properties.sortOrder.value;\n    const sorted = [...items].sort((a, b) => {\n      if (a[field] < b[field]) return -1;\n      if (a[field] > b[field]) return 1;\n      return 0;\n    });\n    return order === 'desc' ? sorted.reverse() : sorted;\n  }\n\n  default:\n    return items;\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

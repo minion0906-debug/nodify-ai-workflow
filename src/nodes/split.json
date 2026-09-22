@@ -1,0 +1,46 @@
+{
+  "id": "split_node",
+  "version": "1.0",
+  "name": "Split",
+  "description": "Splits an array into individual items for sequential processing.",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#EF4444",
+  "icon": "SplitSquareVertical",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Each Item",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "fieldToSplit",
+      "displayName": "Field to Split",
+      "type": "string",
+      "default": "",
+      "description": "The field in the input data containing the array. Leave empty to use the entire input if it's an array.",
+      "ui": {
+        "component": "code"
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Starting Split node');\nconst fieldName = node.properties.fieldToSplit.value;\nlet sourceArray = data;\n\nif (fieldName) {\n  helpers.log(`Splitting field: ${fieldName}`);\n  sourceArray = data[fieldName];\n} else {\n  helpers.log('Splitting entire input data');\n}\n\nif (!Array.isArray(sourceArray)) {\n   helpers.warn('Split node input is not an array. Passing through.');\n   return [data];\n}\n\nhelpers.log(`Splitting array into ${sourceArray.length} individual items`);\nreturn sourceArray;",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

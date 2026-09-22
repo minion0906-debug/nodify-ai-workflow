@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "group": "Social Media",
+  "category": "action",
+  "shape": "circle",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [],
+  "executionCode": "try {\\n  helpers.log('Node execution started');\\n  \\n  // TODO: Implement node logic\\n  \\n  helpers.log('Node execution completed');\\n  return { ...data };\\n} catch (error) {\\n  helpers.error('Node execution failed:', error.message);\\n  throw error;\\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-24",
+    "updatedAt": "2025-10-24"
+  },
+  "id": "telegram-set-title",
+  "name": "Set a title on a chat",
+  "description": "Update chat title",
+  "subGroup": "Telegram",
+  "color": "#0088cc",
+  "icon": "Type"
+}

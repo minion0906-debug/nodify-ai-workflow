@@ -1,0 +1,285 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account within the FlowNode application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user account."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Workflow": {
+      "title": "Workflow",
+      "type": "object",
+      "description": "Represents a user's automated workflow.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the workflow."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of what the workflow does."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "inactive", "draft"],
+          "description": "The current status of the workflow."
+        },
+        "lastRun": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last execution."
+        },
+        "nodes": {
+          "type": "array",
+          "description": "The collection of nodes that make up the workflow graph."
+        },
+        "connections": {
+          "type": "array",
+          "description": "The connections between the nodes in the workflow."
+        },
+        "folderId": {
+          "type": "string",
+          "description": "The ID of the folder this workflow belongs to."
+        }
+      },
+      "required": ["name", "status"]
+    },
+    "WorkflowExecution": {
+        "title": "Workflow Execution",
+        "type": "object",
+        "description": "Represents a single execution of a workflow.",
+        "properties": {
+            "ownerId": {
+              "type": "string",
+              "description": "The UID of the user who owns this execution record."
+            },
+            "workflowId": {
+                "type": "string",
+                "description": "The ID of the workflow this execution belongs to."
+            },
+            "status": {
+                "type": "string",
+                "enum": ["success", "error", "running", "waiting"]
+            },
+            "startedAt": {
+                "type": "string",
+                "format": "date-time"
+            },
+            "finishedAt": {
+                "type": "string",
+                "format": "date-time"
+            }
+        },
+        "required": ["ownerId", "workflowId", "status", "startedAt"]
+    },
+    "Folder": {
+        "title": "Folder",
+        "type": "object",
+        "description": "Represents a user-created folder to organize workflows.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The user-given name for the folder."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the folder was created."
+          }
+        },
+        "required": ["name", "createdAt"]
+    },
+    "Credential": {
+      "title": "Credential",
+      "type": "object",
+      "description": "Represents a stored credential for a user.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user-given name for the credential."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of credential (e.g., API Key, OAuth2)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the credential was created."
+        },
+        "data": {
+          "type": "object",
+          "description": "An object containing the encrypted credential data."
+        }
+      },
+      "required": ["name", "type", "data"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification for a user.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the notification."
+        },
+        "description": {
+          "type": "string",
+          "description": "The main content of the notification."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["info", "warning", "error", "success"],
+          "description": "The type of notification, used for styling."
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Whether the user has read the notification."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the notification was created."
+        }
+      },
+      "required": ["title", "description", "type", "isRead", "createdAt"]
+    },
+    "Table": {
+      "title": "Table",
+      "type": "object",
+      "description": "Represents a user-defined data table.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user-given name for the table."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the table's purpose."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the table was created."
+        },
+        "columns": {
+          "type": "array",
+          "description": "The schema definition for the table's columns."
+        },
+        "rowCount": {
+            "type": "number",
+            "description": "The total number of rows in the table."
+        }
+      },
+      "required": ["name", "columns"]
+    },
+    "TableRow": {
+        "title": "Table Row",
+        "type": "object",
+        "description": "Represents a single row of data within a user-defined table.",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "The unique identifier for this row."
+            },
+            "tableId": {
+                "type": "string",
+                "description": "The ID of the table this row belongs to."
+            },
+            "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp of when the row was created."
+            },
+            "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp of when the row was last updated."
+            },
+            "data": {
+                "type": "object",
+                "description": "A flexible object to store the actual cell data for the row."
+            }
+        },
+        "required": ["id", "tableId", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": {
+      "/users/{userId}": {
+        "schema": { "$ref": "#/entities/User" },
+        "description": "Stores user profile information. Only the authenticated user can access their own document."
+      },
+      "/users/{userId}/workflows/{workflowId}": {
+        "schema": { "$ref": "#/entities/Workflow" },
+        "description": "Stores the workflows created by a specific user."
+      },
+       "/users/{userId}/workflows/{workflowId}/executions/{executionId}": {
+        "schema": { "$ref": "#/entities/WorkflowExecution" },
+        "description": "Stores the execution history for a specific workflow."
+      },
+      "/users/{userId}/folders/{folderId}": {
+        "schema": { "$ref": "#/entities/Folder" },
+        "description": "Stores the folders created by a specific user to organize workflows."
+      },
+      "/users/{userId}/credentials/{credentialId}": {
+        "schema": { "$ref": "#/entities/Credential" },
+        "description": "Stores the encrypted credentials for a specific user."
+      },
+      "/users/{userId}/notifications/{notificationId}": {
+        "schema": { "$ref": "#/entities/Notification" },
+        "description": "Stores notifications for a specific user."
+      },
+      "/users/{userId}/tables/{tableId}": {
+        "schema": { "$ref": "#/entities/Table" },
+        "description": "Stores the metadata for user-defined tables."
+      },
+      "/users/{userId}/tables/{tableId}/rows/{rowId}": {
+        "schema": { "$ref": "#/entities/TableRow" },
+        "description": "Stores a single data row for a specific user-defined table. Allows for document-level operations (get, update, delete)."
+      }
+    },
+    "reasoning": "The Firestore structure is designed to securely manage user data for the FlowNode application, focusing on simplicity and security. It leverages path-based ownership for user data. Here's a detailed breakdown:\n\n*   **/users/{userId}**: This collection stores user profiles. Security rules will ensure that only the authenticated user (or an admin, if applicable) can read and write their own profile data. This approach provides clear ownership and avoids the need for complex authorization logic.\n\n*   **/users/{userId}/workflows/{workflowId}**: This subcollection stores workflows specific to a user. Security rules will ensure that a user can only access their own workflows, enforcing data isolation and privacy.\n\n*   **/users/{userId}/workflows/{workflowId}/executions/{executionId}**: This subcollection stores the execution history for a specific workflow. This hierarchical structure is ideal for security rules, as it allows reads only if the user has access to the parent workflow.\n\n*   **/users/{userId}/folders/{folderId}**: This subcollection stores folders specific to a user, used for organizing workflows. Security rules will ensure that a user can only access their own folders.\n\n*   **/users/{userId}/tables/{tableId}/rows/{rowId}**: This subcollection stores the actual rows of data for a specific table. Security rules will ensure a user can only access rows within their own tables, maintaining data ownership and isolation.\n\nThis structure prioritizes Authorization Independence and supports secure list operations (QAPs) by:\n\n*   **Path-Based Ownership:** The `/users/{userId}` collection and its subcollections provide inherent ownership. Security rules can directly verify `request.auth.uid == userId` for all operations within a user's document tree."
+  }
+}
+
+    

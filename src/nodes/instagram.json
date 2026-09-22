@@ -1,0 +1,188 @@
+{
+  "id": "instagram",
+  "version": "1.0",
+  "name": "Instagram",
+  "description": "Post photos, videos, stories, and manage Instagram Business content.",
+  "group": "Social Media",
+  "subGroup": "Instagram",
+  "category": "action",
+  "shape": "circle",
+  "color": "#E4405F",
+  "icon": "Instagram",
+  "executionEnvironment": "server",
+  "executionFile": false,
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "credential",
+      "displayName": "Instagram Access Token",
+      "type": "credential",
+      "credentialType": "instagram",
+      "required": true,
+      "description": "Instagram Graph API access token"
+    },
+    {
+      "name": "accountId",
+      "displayName": "Instagram Business Account ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Your Instagram Business Account ID"
+    },
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "createPost",
+      "options": [
+        {
+          "value": "createPost",
+          "label": "Create Post"
+        },
+        {
+          "value": "createStory",
+          "label": "Create Story"
+        },
+        {
+          "value": "createReel",
+          "label": "Create Reel"
+        },
+        {
+          "value": "getMediaInsights",
+          "label": "Get Media Insights"
+        },
+        {
+          "value": "getAccountInsights",
+          "label": "Get Account Insights"
+        }
+      ],
+      "description": "The operation to perform"
+    },
+    {
+      "name": "mediaType",
+      "displayName": "Media Type",
+      "type": "options",
+      "default": "IMAGE",
+      "options": [
+        {
+          "value": "IMAGE",
+          "label": "Image"
+        },
+        {
+          "value": "VIDEO",
+          "label": "Video"
+        },
+        {
+          "value": "CAROUSEL",
+          "label": "Carousel (Multiple Images)"
+        }
+      ],
+      "description": "Type of media to post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost"]
+        }
+      }
+    },
+    {
+      "name": "imageUrl",
+      "displayName": "Image URL",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Public URL of the image to post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost", "createStory"],
+          "mediaType": ["IMAGE"]
+        }
+      }
+    },
+    {
+      "name": "videoUrl",
+      "displayName": "Video URL",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Public URL of the video to post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost", "createReel"],
+          "mediaType": ["VIDEO"]
+        }
+      }
+    },
+    {
+      "name": "caption",
+      "displayName": "Caption",
+      "type": "text",
+      "default": "",
+      "description": "Caption for the post (max 2200 characters)",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost", "createReel"]
+        }
+      }
+    },
+    {
+      "name": "location",
+      "displayName": "Location ID",
+      "type": "string",
+      "default": "",
+      "description": "Facebook Page ID to tag as location",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost"]
+        }
+      }
+    },
+    {
+      "name": "mediaId",
+      "displayName": "Media ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Instagram media ID for insights",
+      "displayOptions": {
+        "show": {
+          "operation": ["getMediaInsights"]
+        }
+      }
+    },
+    {
+      "name": "metrics",
+      "displayName": "Metrics",
+      "type": "text",
+      "default": "engagement,impressions,reach",
+      "description": "Comma-separated metrics to retrieve",
+      "displayOptions": {
+        "show": {
+          "operation": ["getMediaInsights", "getAccountInsights"]
+        }
+      }
+    }
+  ],
+  "executionCode": "try { helpers.log('Starting Instagram node execution'); const accessToken = node.properties.credential?.value; const accountId = node.properties.accountId?.value; const operation = node.properties.operation?.value; if (!accessToken) { helpers.error('Access token is missing'); throw new Error('Instagram Graph API access token is required'); } if (!operation) { helpers.error('Operation is missing'); throw new Error('Operation is required'); } const doFetch = async (url, opts) => { const res = await fetch(url, opts); const json = await res.json(); if (!res.ok) { const msg = json?.error?.message || JSON.stringify(json); throw new Error(msg); } return json; }; if (operation === 'createPost') { const mediaType = node.properties.mediaType?.value || 'IMAGE'; const caption = node.properties.caption?.value || ''; if (!accountId) throw new Error('Instagram Business Account ID is required'); const containerEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media`; const containerBody = (mediaType === 'IMAGE') ? { image_url: node.properties.imageUrl?.value, caption } : { video_url: node.properties.videoUrl?.value, media_type: 'VIDEO', caption }; if (!containerBody.image_url && mediaType==='IMAGE') throw new Error('Image URL is required for image posts'); if (!containerBody.video_url && mediaType==='VIDEO') throw new Error('Video URL is required for video posts'); const container = await doFetch(`${containerEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(containerBody) }); const publishEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media_publish`; const publish = await doFetch(`${publishEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creation_id: container.id }) }); return { ...data, instagram: publish }; } else if (operation === 'createStory') { if (!accountId) throw new Error('Instagram Business Account ID is required'); const imageUrl = node.properties.imageUrl?.value; if (!imageUrl) throw new Error('Image URL is required for stories'); const storyEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media`; const container = await doFetch(`${storyEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageUrl, media_type: 'STORIES' }) }); const publishEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media_publish`; const publish = await doFetch(`${publishEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creation_id: container.id }) }); return { ...data, instagram: publish }; } else if (operation === 'createReel') { if (!accountId) throw new Error('Instagram Business Account ID is required'); const videoUrl = node.properties.videoUrl?.value; const caption = node.properties.caption?.value || ''; if (!videoUrl) throw new Error('Video URL is required for reels'); const reelEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media`; const container = await doFetch(`${reelEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_url: videoUrl, media_type: 'REELS', caption }) }); const publishEndpoint = `https://graph.facebook.com/v18.0/${accountId}/media_publish`; const publish = await doFetch(`${publishEndpoint}?access_token=${accessToken}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creation_id: container.id }) }); return { ...data, instagram: publish }; } else if (operation === 'getMediaInsights') { const mediaId = node.properties.mediaId?.value; const metrics = node.properties.metrics?.value || 'engagement,impressions,reach'; if (!mediaId) throw new Error('Media ID is required for insights'); const endpoint = `https://graph.facebook.com/v18.0/${mediaId}/insights?metric=${metrics}&access_token=${accessToken}`; const result = await doFetch(endpoint, { method: 'GET' }); return { ...data, instagram: result }; } else if (operation === 'getAccountInsights') { if (!accountId) throw new Error('Instagram Business Account ID is required'); const metrics = node.properties.metrics?.value || 'impressions,reach,profile_views'; const endpoint = `https://graph.facebook.com/v18.0/${accountId}/insights?metric=${metrics}&period=day&access_token=${accessToken}`; const result = await doFetch(endpoint, { method: 'GET' }); return { ...data, instagram: result }; } else { throw new Error(`Unsupported operation: ${operation}`); } } catch (error) { helpers.error('Instagram node execution failed:', error.message); return { path: 'error', data: { error: error.message } }; }",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-23",
+    "updatedAt": "2025-10-23"
+  }
+}

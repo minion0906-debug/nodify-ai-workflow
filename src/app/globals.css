@@ -1,0 +1,521 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* === BASE === */
+    --background: 0 0% 10%;              /* #1a1a1a - Fondo principal (Claude) */
+    --foreground: 28 10% 88%;            /* #e2dfdb - Texto principal cálido */
+
+    /* === SUPERFICIES === */
+    --card: 0 0% 13%;                    /* #212121 */
+    --card-foreground: 28 10% 88%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 28 10% 88%;
+
+    /* === MARCA (Cobre/Canela estilo Claude) === */
+    --primary: 20 55% 52%;               /* #c27b52 - tono cobre quemado */
+    --primary-foreground: 0 0% 100%;
+
+    /* === TONOS SECUNDARIOS Y NEUTROS === */
+    --secondary: 0 0% 17%;               /* #2b2b2b - Sidebar */
+    --secondary-foreground: 30 8% 85%;
+    --muted: 0 0% 22%;                   /* #383838 - Superficie apagada */
+    --muted-foreground: 30 6% 70%;       /* Gris medio */
+    
+    /* === ACENTOS === */
+    --accent: 28 30% 63%;                /* #d7b89c - Beige anaranjado */
+    --accent-foreground: 0 0% 100%;
+
+    /* === ALERTAS / ESTADOS === */
+    --success: 125 35% 55%;              /* #74b182 - Verde tenue */
+    --warning: 35 85% 55%;               /* #e9a94f - Amarillo cobre */
+    --error: 5 70% 50%;                  /* #cf5c4c - Rojo suave */
+    --info: 210 80% 60%;                 /* #4ca3ff - Azul para info */
+    --destructive: var(--error);
+    
+    --success-foreground: 0 0% 100%;
+    --warning-foreground: 0 0% 0%;
+    --error-foreground: 0 0% 100%;
+    --info-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* === DETALLES === */
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: var(--primary);
+    --radius: 0.5rem;
+
+    /* === CHARTS === */
+    --chart-1: 20 55% 52%;  /* cobre */
+    --chart-2: 170 30% 45%; /* verde petróleo */
+    --chart-3: 210 25% 50%; /* azul grisáceo */
+    --chart-4: 40 40% 60%;  /* dorado suave */
+    --chart-5: 330 25% 60%; /* violeta apagado */
+
+    --color-primary-rgb: 194, 123, 82;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 28 10% 88%;
+    --card: 0 0% 13%;
+    --card-foreground: 28 10% 88%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 28 10% 88%;
+    --primary: 20 55% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 30 8% 85%;
+    --muted: 0 0% 22%;
+    --muted-foreground: 30 6% 70%;
+    --accent: 28 30% 63%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 5 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 20 55% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html, body {
+    @apply h-full w-full bg-background text-foreground;
+    font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+
+  /* Typography defaults */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headline), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .hexagon {
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+  
+  .diamond {
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+
+  .sticky-note-textarea {
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    border-radius: inherit;
+    resize: none;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: inherit;
+    line-height: inherit;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .sidebar {
+    color: #1f1e1d;
+  }
+
+  .prose {
+    color: inherit;
+    font-size: inherit;
+    text-align: inherit;
+  }
+
+  .prose :where(p):not(:where([class~="not-prose"] *)) {
+    margin: 0;
+  }
+
+  .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
+    color: inherit;
+    margin-top: 0.5em;
+    margin-bottom: 0.25em;
+  }
+
+  .prose :where(ul,ol):not(:where([class~="not-prose"] *)) {
+    margin: 0;
+    padding-left: 1.5em;
+  }
+
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    color: hsl(var(--primary));
+  }
+
+  .react-flow__resize-handle {
+    @apply w-4 h-4 bg-primary border-2 border-background rounded-full shadow-lg transform;
+    z-index: 20;
+  }
+
+  .react-flow__resize-handle-se {
+    @apply cursor-se-resize;
+    right: -0.5rem;
+    bottom: -0.5rem;
+  }
+
+  .react-flow__node-groupSticker,
+  .react-flow__node-groupSticker.selected,
+  .react-flow__node-groupSticker.dragging {
+    z-index: 0 !important;
+  }
+
+  /* Touch feedback para elementos interactivos */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Touch feedback para nodos en React Flow */
+  .react-flow__node {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+
+  /* Optimizaciones de rendimiento para drag */
+  .react-flow__node.dragging {
+    will-change: transform;
+  }
+
+  .react-flow__node:not(.dragging) {
+    will-change: auto;
+  }
+
+  /* Disable transitions during drag for better performance */
+  .react-flow__node.dragging * {
+    transition: none !important;
+  }
+
+
+  /* Optimize edges rendering */
+  .react-flow__edge {
+    pointer-events: stroke;
+  }
+
+  .react-flow__edge-path {
+    stroke-width: inherit;
+  }
+
+  /* Handle styling improvements */
+  .react-flow__handle {
+    transition: all 0.2s ease;
+    cursor: crosshair;
+    z-index: 10;
+  }
+
+  /* Target handles (inputs) - rectangular */
+  .react-flow__handle.target {
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+  }
+
+  /* Source handles (outputs) - circular */
+  .react-flow__handle.source {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .react-flow__handle:hover {
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.25);
+    z-index: 20;
+  }
+
+  .react-flow__handle.target:hover {
+    transform: scaleX(1.5);
+  }
+
+  .react-flow__handle.source:hover {
+    transform: scale(1.4);
+  }
+
+  .react-flow__handle-connecting {
+    background: hsl(var(--primary)) !important;
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0.3);
+    z-index: 30;
+  }
+
+  .react-flow__handle.target.react-flow__handle-connecting {
+    transform: scaleX(2);
+  }
+
+  .react-flow__handle.source.react-flow__handle-connecting {
+    transform: scale(1.5);
+  }
+
+  .react-flow__handle-valid {
+    background: hsl(var(--success)) !important;
+    border-color: hsl(var(--success)) !important;
+    box-shadow: 0 0 0 4px hsl(var(--success) / 0.2);
+  }
+
+  .react-flow__handle-invalid {
+    background: hsl(var(--error)) !important;
+    border-color: hsl(var(--error)) !important;
+  }
+
+  /* Mobile optimizations for handles */
+  @media (hover: none) and (pointer: coarse) {
+    .react-flow__handle.target {
+      width: 6px;
+      height: 20px;
+    }
+
+    .react-flow__handle.source {
+      width: 16px;
+      height: 16px;
+    }
+
+    .react-flow__handle-connecting {
+      transform: scale(1.3);
+    }
+  }
+
+  /* Smooth breathing animation for executing nodes */
+  @keyframes node-breath {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .node-breathing {
+    animation: node-breath 2.5s ease-in-out infinite;
+  }
+
+
+  @media (hover: none) and (pointer: coarse) {
+    /* Estilos específicos para dispositivos táctiles */
+    .react-flow__node:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
+
+  /* Prevenir selección de texto en elementos de UI */
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="tablist"],
+  [role="dialog"],
+  [data-radix-dialog-overlay],
+  [data-radix-dialog-content],
+  [data-radix-sheet-overlay],
+  [data-radix-sheet-content],
+  [data-state="open"],
+  .react-flow__controls,
+  .react-flow__panel,
+  nav,
+  header {
+    -ms-user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+  }
+
+  /* Permitir selección solo en elementos de contenido */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .monaco-editor {
+    -ms-user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+  }
+
+  /* Mejoras de performance */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #__next, #root {
+    @apply flex flex-col h-full w-full;
+  }
+
+  /* Monaco Editor - Variable decorations */
+  .variable-valid {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: all 0.2s ease;
+  }
+
+  .variable-valid:hover {
+    background-color: rgba(34, 197, 94, 0.25) !important;
+    border-color: rgba(34, 197, 94, 0.5);
+  }
+
+  .variable-invalid {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: all 0.2s ease;
+  }
+
+  .variable-invalid:hover {
+    background-color: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+
+  .variable-pending {
+    background-color: rgba(107, 114, 128, 0.15) !important;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: all 0.2s ease;
+  }
+
+  .variable-pending:hover {
+    background-color: rgba(107, 114, 128, 0.25) !important;
+    border-color: rgba(107, 114, 128, 0.5);
+  }
+
+  .variable-inline-valid {
+    color: #22c55e !important;
+    font-weight: 600;
+  }
+
+  .variable-inline-invalid {
+    color: #ef4444 !important;
+    font-weight: 600;
+    text-decoration: wavy underline;
+  }
+
+  /* Hide iPad keyboard button in Monaco Editor */
+  .monaco-editor .iPadShowKeyboard {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+  }
+  .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+  }
+
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background) / 0.5);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+}
+
+@layer components {
+  /* Tarjetas estilo app nativa - MEJORADO PARA MÓVIL */
+  .card-native {
+    @apply bg-card border border-border/50 rounded-xl shadow-md p-3 transition-all duration-200;
+  }
+  
+  @media (min-width: 1024px) {
+    .card-native {
+      @apply rounded-2xl p-4 shadow-lg hover:shadow-xl;
+    }
+  }
+
+  /* Header nativo - REMOVIDO - Ahora se usa inline en el componente */
+  
+  /* Bottom Sheet responsivo - OPTIMIZADO PARA MÓVIL */
+  .sheet-native {
+    @apply fixed inset-x-0 bottom-0 max-h-[80vh] rounded-t-2xl bg-background border-t border-border/50 backdrop-blur-xl shadow-2xl overflow-y-auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: hsl(var(--background) / 0.98);
+  }
+
+  /* FAB responsivo - OPTIMIZADO PARA MÓVIL */
+  .fab {
+    @apply fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-xl active:scale-95 hover:shadow-2xl transition-all duration-200;
+    will-change: transform;
+    z-index: 40;
+  }
+
+  @media (min-width: 768px) {
+    .fab {
+      @apply bottom-8 right-8;
+    }
+  }
+
+  /* Cuando hay un bottom navbar flotante, ajustar el FAB para móviles */
+  @media (max-width: 767px) {
+    .fab-with-navbar {
+      bottom: 5.5rem;
+    }
+  }
+
+  .fab::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-white opacity-0 transition-opacity duration-200;
+  }
+
+  .fab:active::before {
+    @apply opacity-20;
+  }
+
+  /* Transiciones generales */
+  .transition-app {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Scroll suave */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area para iOS - SIMPLIFICADO */
+  @supports (padding: max(0px)) {
+    .safe-top {
+      padding-top: max(env(safe-area-inset-top), 0.5rem);
+    }
+
+    .safe-bottom {
+      padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    }
+  }
+
+}

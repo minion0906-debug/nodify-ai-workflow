@@ -1,0 +1,201 @@
+{
+  "id": "facebook",
+  "version": "1.0",
+  "name": "Facebook",
+  "description": "Post to Facebook pages, get insights, manage posts and engage with your audience.",
+  "group": "Social Media",
+  "subGroup": "Facebook",
+  "category": "action",
+  "shape": "circle",
+  "color": "#1877F2",
+  "icon": "Facebook",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "credential",
+      "displayName": "Facebook Access Token",
+      "type": "credential",
+      "credentialType": "facebook",
+      "required": true,
+      "description": "Facebook Graph API access token"
+    },
+    {
+      "name": "pageId",
+      "displayName": "Page ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Facebook Page ID"
+    },
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "createPost",
+      "options": [
+        {
+          "value": "createPost",
+          "label": "Create Post"
+        },
+        {
+          "value": "createPhoto",
+          "label": "Create Photo Post"
+        },
+        {
+          "value": "createVideo",
+          "label": "Create Video Post"
+        },
+        {
+          "value": "deletePost",
+          "label": "Delete Post"
+        },
+        {
+          "value": "getPageInsights",
+          "label": "Get Page Insights"
+        },
+        {
+          "value": "getPostInsights",
+          "label": "Get Post Insights"
+        }
+      ],
+      "description": "The operation to perform"
+    },
+    {
+      "name": "message",
+      "displayName": "Message",
+      "type": "text",
+      "default": "",
+      "required": true,
+      "description": "The post message/caption",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost", "createPhoto", "createVideo"]
+        }
+      }
+    },
+    {
+      "name": "link",
+      "displayName": "Link",
+      "type": "string",
+      "default": "",
+      "description": "URL to attach to the post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost"]
+        }
+      }
+    },
+    {
+      "name": "photoUrl",
+      "displayName": "Photo URL",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "URL of the photo to post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPhoto"]
+        }
+      }
+    },
+    {
+      "name": "videoUrl",
+      "displayName": "Video URL",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "URL of the video to post",
+      "displayOptions": {
+        "show": {
+          "operation": ["createVideo"]
+        }
+      }
+    },
+    {
+      "name": "published",
+      "displayName": "Published",
+      "type": "boolean",
+      "default": true,
+      "description": "Publish immediately or save as draft",
+      "displayOptions": {
+        "show": {
+          "operation": ["createPost", "createPhoto", "createVideo"]
+        }
+      }
+    },
+    {
+      "name": "postId",
+      "displayName": "Post ID",
+      "type": "string",
+      "default": "",
+      "required": true,
+      "description": "Facebook post ID",
+      "displayOptions": {
+        "show": {
+          "operation": ["deletePost", "getPostInsights"]
+        }
+      }
+    },
+    {
+      "name": "metrics",
+      "displayName": "Metrics",
+      "type": "text",
+      "default": "page_impressions,page_engaged_users",
+      "description": "Comma-separated metrics to retrieve",
+      "displayOptions": {
+        "show": {
+          "operation": ["getPageInsights", "getPostInsights"]
+        }
+      }
+    },
+    {
+      "name": "period",
+      "displayName": "Period",
+      "type": "options",
+      "default": "day",
+      "options": [
+        {
+          "value": "day",
+          "label": "Day"
+        },
+        {
+          "value": "week",
+          "label": "Week"
+        },
+        {
+          "value": "days_28",
+          "label": "28 Days"
+        }
+      ],
+      "description": "Time period for insights",
+      "displayOptions": {
+        "show": {
+          "operation": ["getPageInsights"]
+        }
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Executing Facebook operation:', node.properties.operation.value);\n\nconst accessToken = node.properties.credential.value;\nconst pageId = node.properties.pageId.value;\nconst operation = node.properties.operation.value;\n\nlet result;\n\nif (operation === 'createPost') {\n  const message = node.properties.message.value;\n  const link = node.properties.link.value;\n  const published = node.properties.published.value;\n  \n  helpers.log('Creating post on page:', pageId);\n  \n  const postData = {\n    message: message,\n    published: published,\n    access_token: accessToken\n  };\n  \n  if (link) {\n    postData.link = link;\n  }\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/feed`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify(postData)\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Post created successfully:', result.id);\n  \n} else if (operation === 'createPhoto') {\n  const message = node.properties.message.value;\n  const photoUrl = node.properties.photoUrl.value;\n  const published = node.properties.published.value;\n  \n  helpers.log('Creating photo post on page:', pageId);\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/photos`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      url: photoUrl,\n      caption: message,\n      published: published,\n      access_token: accessToken\n    })\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Photo posted successfully:', result.id);\n  \n} else if (operation === 'createVideo') {\n  const message = node.properties.message.value;\n  const videoUrl = node.properties.videoUrl.value;\n  const published = node.properties.published.value;\n  \n  helpers.log('Creating video post on page:', pageId);\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/videos`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      file_url: videoUrl,\n      description: message,\n      published: published,\n      access_token: accessToken\n    })\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Video posted successfully:', result.id);\n  \n} else if (operation === 'deletePost') {\n  const postId = node.properties.postId.value;\n  \n  helpers.log('Deleting post:', postId);\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${postId}?access_token=${accessToken}`, {\n    method: 'DELETE'\n  });\n  \n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Post deleted successfully');\n  \n} else if (operation === 'getPageInsights') {\n  const metrics = node.properties.metrics.value;\n  const period = node.properties.period.value;\n  \n  helpers.log('Getting page insights for:', pageId);\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/insights?metric=${metrics}&period=${period}&access_token=${accessToken}`);\n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Page insights retrieved successfully');\n  \n} else if (operation === 'getPostInsights') {\n  const postId = node.properties.postId.value;\n  const metrics = node.properties.metrics.value;\n  \n  helpers.log('Getting post insights for:', postId);\n  \n  const response = await fetch(`https://graph.facebook.com/v18.0/${postId}/insights?metric=${metrics}&access_token=${accessToken}`);\n  result = await response.json();\n  \n  if (result.error) {\n    helpers.error('Facebook API error:', result.error.message);\n    throw new Error(`Facebook API error: ${result.error.message}`);\n  }\n  \n  helpers.log('Post insights retrieved successfully');\n}\n\nreturn {\n  ...data,\n  facebook: result\n};",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-23",
+    "updatedAt": "2025-10-23"
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "fields": [
+    {
+      "name": "fullName",
+      "type": "text",
+      "label": "Full Name",
+      "placeholder": "Enter your full name",
+      "required": true,
+      "autoComplete": "name",
+      "style": {
+        "width": "100%",
+        "padding": "0.75rem",
+        "fontSize": "16px",
+        "border": "1px solid #D1D5DB",
+        "borderRadius": "6px"
+      }
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "label": "Email Address",
+      "placeholder": "you@example.com",
+      "required": true,
+      "autoComplete": "email",
+      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "validation": {
+        "errorMessage": "Please enter a valid email address",
+        "validateOn": "blur"
+      },
+      "style": {
+        "width": "100%",
+        "padding": "0.75rem",
+        "fontSize": "16px",
+        "border": "1px solid #D1D5DB",
+        "borderRadius": "6px"
+      }
+    },
+    {
+      "name": "phone",
+      "type": "tel",
+      "label": "Phone Number",
+      "placeholder": "(555) 123-4567",
+      "autoComplete": "tel",
+      "pattern": "^\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$"
+    },
+    {
+      "name": "age",
+      "type": "number",
+      "label": "Age",
+      "min": 18,
+      "max": 120,
+      "required": true,
+      "validation": {
+        "custom": "value >= 18 && value <= 120",
+        "errorMessage": "You must be between 18 and 120 years old"
+      }
+    },
+    {
+      "name": "subscribe",
+      "type": "checkbox",
+      "label": "Subscribe to newsletter",
+      "defaultValue": false
+    },
+    {
+      "name": "interests",
+      "type": "select",
+      "label": "Interests",
+      "placeholder": "Select your interests",
+      "multiple": true,
+      "options": [
+        { "label": "Technology", "value": "tech" },
+        { "label": "Design", "value": "design" },
+        { "label": "Marketing", "value": "marketing" },
+        { "label": "Sales", "value": "sales" }
+      ]
+    },
+    {
+      "name": "preferredContact",
+      "type": "radio",
+      "label": "Preferred Contact Method",
+      "required": true,
+      "options": [
+        { "label": "Email", "value": "email", "selected": true },
+        { "label": "Phone", "value": "phone" },
+        { "label": "SMS", "value": "sms" }
+      ]
+    },
+    {
+      "name": "message",
+      "type": "textarea",
+      "label": "Message",
+      "placeholder": "Tell us more about yourself...",
+      "rows": 5,
+      "minLength": 10,
+      "maxLength": 500,
+      "style": {
+        "width": "100%",
+        "padding": "0.75rem",
+        "fontSize": "16px",
+        "border": "1px solid #D1D5DB",
+        "borderRadius": "6px",
+        "resize": "vertical"
+      }
+    },
+    {
+      "name": "resume",
+      "type": "file",
+      "label": "Upload Resume",
+      "accept": ".pdf,.doc,.docx",
+      "conditional": {
+        "when": "preferredContact",
+        "is": "email",
+        "operator": "equals"
+      }
+    },
+    {
+      "name": "submit",
+      "type": "submit",
+      "label": "Submit Application",
+      "style": {
+        "width": "100%",
+        "padding": "0.875rem",
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "color": "#FFFFFF",
+        "backgroundColor": "#3B82F6",
+        "border": "none",
+        "borderRadius": "6px",
+        "cursor": "pointer",
+        "transition": "background-color 0.2s"
+      }
+    }
+  ],
+  "styling": {
+    "container": {
+      "maxWidth": "600px",
+      "width": "100%",
+      "padding": "2rem",
+      "margin": "2rem auto",
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #E5E7EB",
+      "borderRadius": "12px",
+      "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+    },
+    "theme": "light",
+    "colors": {
+      "primary": "#3B82F6",
+      "success": "#10B981",
+      "error": "#EF4444",
+      "text": "#1F2937",
+      "textSecondary": "#6B7280",
+      "background": "#FFFFFF",
+      "border": "#D1D5DB"
+    },
+    "typography": {
+      "fontFamily": "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      "fontSize": "16px",
+      "labelFontSize": "14px",
+      "labelFontWeight": "500",
+      "lineHeight": "1.5"
+    },
+    "spacing": {
+      "fieldGap": "1.5rem",
+      "labelMargin": "0.5rem",
+      "buttonMargin": "2rem 0 0"
+    }
+  },
+  "layout": {
+    "type": "vertical",
+    "columns": 1,
+    "rowGap": "1.5rem",
+    "responsive": {
+      "mobile": {
+        "columns": 1,
+        "gap": "1rem"
+      },
+      "tablet": {
+        "columns": 2,
+        "gap": "1.5rem"
+      },
+      "desktop": {
+        "columns": 2,
+        "gap": "2rem"
+      }
+    }
+  },
+  "validation": {
+    "mode": "onSubmit",
+    "showErrorsInline": true,
+    "showErrorsSummary": false
+  }
+}

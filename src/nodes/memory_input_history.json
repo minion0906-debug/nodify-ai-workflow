@@ -1,0 +1,51 @@
+{
+  "id": "memory_input_history",
+  "version": "1.0",
+  "name": "Input History Memory",
+  "description": "Use conversation history from input data (data.history.user and data.history.agent)",
+  "group": "AI Memory",
+  "category": "ai",
+  "shape": "3x2",
+  "color": "#8B5CF6",
+  "icon": "History",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Memory",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "memoryWindow",
+      "displayName": "History Window",
+      "type": "number",
+      "default": 10,
+      "description": "Number of message pairs to load from history"
+    },
+    {
+      "name": "notice",
+      "displayName": "Info",
+      "type": "notice",
+      "default": "Expects input data with format: { history: { user: [...], agent: [...] } }. Returns the last N message pairs."
+    }
+  ],
+  "executionCode": "const memoryWindow = parseInt(node.properties.memoryWindow?.value || 10);\n\nhelpers.log('[Input History Memory] Loading from data.history');\n\nconst messages = [];\n\nif (data && data.history) {\n  try {\n    const userHist = Array.isArray(data.history.user) ? data.history.user : [];\n    const agentHist = Array.isArray(data.history.agent) ? data.history.agent : [];\n    \n    const start = Math.max(0, Math.max(userHist.length, agentHist.length) - memoryWindow);\n    \n    for (let i = start; i < Math.max(userHist.length, agentHist.length); i++) {\n      const u = userHist[i];\n      const a = agentHist[i];\n      \n      if (u !== undefined) {\n        messages.push({ role: 'user', content: String(u) });\n      }\n      if (a !== undefined) {\n        messages.push({ role: 'assistant', content: String(a) });\n      }\n    }\n    \n    helpers.log(`Loaded ${messages.length} messages from input history`);\n  } catch (e) {\n    helpers.error(`Input history load failed: ${e.message}`);\n  }\n} else {\n  helpers.warn('No history data found in input');\n}\n\nreturn {\n  messages,\n  chatId: data?.chatId,\n  sessionId: data?.sessionId || 'default',\n  memoryWindow,\n  type: 'input_history'\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

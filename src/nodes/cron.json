@@ -1,0 +1,43 @@
+{
+  "id": "cron_trigger",
+  "version": "1.0",
+  "name": "Cron",
+  "description": "Run the workflow on a schedule (e.g., '*/5 * * * *').",
+  "group": "Triggers",
+  "category": "trigger",
+  "shape": "2x2",
+  "color": "#22C55E",
+  "icon": "Clock",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "cronExpression",
+      "displayName": "Cron Expression",
+      "type": "string",
+      "default": "*/5 * * * *",
+      "required": true,
+      "description": "Standard cron expression for the schedule."
+    },
+    {
+      "name": "runImmediately",
+      "displayName": "Run Immediately on Activate",
+      "type": "boolean",
+      "default": false,
+      "description": "If enabled, the node will execute once as soon as the workflow is activated."
+    }
+  ],
+  "executionCode": "return { event: 'cronTick', time: new Date().toISOString() };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

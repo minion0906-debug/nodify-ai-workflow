@@ -1,0 +1,42 @@
+{
+  "id": "function_node",
+  "version": "1.0",
+  "name": "Function",
+  "description": "Run a JavaScript function that can access all input data.",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#F97316",
+  "icon": "Cpu",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "functionCode",
+      "displayName": "Function Code",
+      "type": "javascript",
+      "default": "// Access previous node data with `data` or an array of items with `items`\n// Access any node's output with `$['Node Name'].output`\n\nfor (const item of items) {\n  item.processed = true;\n}\n\nreturn items;"
+    }
+  ],
+  "executionCode": "helpers.log('Starting Function node');\nconst userCode = node.properties.functionCode.value || '';\nif (!userCode.trim()) {\n  helpers.warn('No function code provided, passing through data');\n  return data;\n}\n\nhelpers.log('Executing user-defined function');\nhelpers.log(`Code length: ${userCode.length} characters`);\nhelpers.log(`Input items count: ${items?.length || 0}`);\n\ntry {\n  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;\n  const userFn = new AsyncFunction('node', 'data', 'items', 'execution', '$', '$input', '$json', '$node', 'helpers', userCode);\n  \n  const result = await userFn(node, data, items, execution, $, $input, $json, $node, helpers);\n  helpers.log('Function executed successfully');\n  return result;\n} catch (error) {\n  helpers.error('Function execution failed:', error.message);\n  helpers.error('Stack trace:', error.stack);\n  throw error;\n}",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

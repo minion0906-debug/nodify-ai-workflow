@@ -1,0 +1,54 @@
+{
+  "id": "tool_http_get",
+  "version": "1.0",
+  "name": "HTTP GET Tool",
+  "description": "Tool for AI Agent to fetch data from URLs via HTTP GET requests",
+  "group": "AI Tools",
+  "category": "ai",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "Download",
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Tool",
+      "position": "top",
+      "type": "json",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "toolName",
+      "displayName": "Tool Name",
+      "type": "string",
+      "default": "http_get",
+      "required": true,
+      "description": "Unique name for this tool (used by AI Agent)"
+    },
+    {
+      "name": "toolDescription",
+      "displayName": "Description",
+      "type": "string",
+      "default": "Fetch data from a URL using HTTP GET. Returns the response as text or JSON.",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "Describe what this tool does (helps AI decide when to use it)"
+    },
+    {
+      "name": "enabled",
+      "displayName": "Enabled",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "executionCode": "return {\n  name: node.properties.toolName?.value || 'http_get',\n  description: node.properties.toolDescription?.value || 'Fetch data from URL',\n  enabled: node.properties.enabled?.value !== false,\n  schema: {\n    type: 'object',\n    properties: {\n      url: {\n        type: 'string',\n        description: 'The URL to fetch'\n      },\n      headers: {\n        type: 'object',\n        description: 'Optional HTTP headers'\n      }\n    },\n    required: ['url']\n  },\n  code: `const fetch = (await import('node-fetch')).default;\nconst response = await fetch(args.url, {\n  method: 'GET',\n  headers: args.headers || {}\n});\nconst contentType = response.headers.get('content-type');\nif (contentType && contentType.includes('application/json')) {\n  return await response.json();\n}\nreturn await response.text();`\n};",
+  "executionEnvironment": "server",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-30",
+    "updatedAt": "2025-10-30"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "if_node",
+  "version": "1.0",
+  "name": "If",
+  "description": "Evaluate a condition and route the workflow accordingly.",
+  "group": "Logic",
+  "category": "logic",
+  "shape": "2x2",
+  "color": "#10B981",
+  "icon": "GitBranch",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "true",
+      "label": "True",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    },
+    {
+      "id": "false",
+      "label": "False",
+      "position": "right",
+      "type": "any",
+      "slot": 2
+    }
+  ],
+  "properties": [
+    {
+      "name": "leftValue",
+      "displayName": "Left Value",
+      "type": "string",
+      "default": "{{data.status}}",
+      "ui": {
+        "component": "code"
+      }
+    },
+    {
+      "name": "operator",
+      "displayName": "Operator",
+      "type": "options",
+      "default": "equals",
+      "options": [
+        {
+          "value": "equals",
+          "label": "Equals"
+        },
+        {
+          "value": "not_equals",
+          "label": "Not Equals"
+        },
+        {
+          "value": "greater",
+          "label": "Greater Than"
+        },
+        {
+          "value": "less",
+          "label": "Less Than"
+        },
+        {
+          "value": "contains",
+          "label": "Contains"
+        }
+      ]
+    },
+    {
+      "name": "rightValue",
+      "displayName": "Right Value",
+      "type": "string",
+      "default": "success",
+      "ui": {
+        "component": "code"
+      }
+    }
+  ],
+  "executionCode": "helpers.log('Evaluating IF condition'); const left = node.properties.leftValue.value; const right = node.properties.rightValue.value; const op = node.properties.operator.value; helpers.log(`Left value: ${JSON.stringify(left)}`); helpers.log(`Operator: ${op}`); helpers.log(`Right value: ${JSON.stringify(right)}`); let condition = false; switch (op) { case 'equals': condition = left == right; break; case 'not_equals': condition = left != right; break; case 'greater': condition = Number(left) > Number(right); break; case 'less': condition = Number(left) < Number(right); break; case 'contains': condition = (left || '').toString().includes(right); break; } const path = condition ? 'true' : 'false'; helpers.log(`Condition evaluated to: ${condition}`); helpers.log(`Taking path: ${path}`); return { ...data, condition, path };",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-06"
+  }
+}

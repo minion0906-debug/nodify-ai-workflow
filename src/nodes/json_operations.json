@@ -1,0 +1,173 @@
+{
+  "id": "json_operations_node",
+  "version": "1.0",
+  "name": "JSON Operations",
+  "description": "Advanced JSON manipulation: parse, stringify, merge, extract paths, validate, and transform.",
+  "group": "Data",
+  "category": "data",
+  "executionEnvironment": "server",
+  "executionFile": false,
+  "shape": "2x2",
+  "color": "#3B82F6",
+  "icon": "Braces",
+  "inputs": [
+    {
+      "id": "main",
+      "label": "Input",
+      "position": "left",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "outputs": [
+    {
+      "id": "main",
+      "label": "Output",
+      "position": "right",
+      "type": "any",
+      "slot": 1
+    }
+  ],
+  "properties": [
+    {
+      "name": "operation",
+      "displayName": "Operation",
+      "type": "options",
+      "default": "parse",
+      "required": true,
+      "options": [
+        {
+          "id": "op-parse",
+          "label": "Parse (String → JSON)",
+          "value": "parse"
+        },
+        {
+          "id": "op-stringify",
+          "label": "Stringify (JSON → String)",
+          "value": "stringify"
+        },
+        {
+          "id": "op-get",
+          "label": "Get Value by Path",
+          "value": "get"
+        },
+        {
+          "id": "op-set",
+          "label": "Set Value by Path",
+          "value": "set"
+        },
+        {
+          "id": "op-merge",
+          "label": "Merge Objects",
+          "value": "merge"
+        },
+        {
+          "id": "op-keys",
+          "label": "Get Keys",
+          "value": "keys"
+        },
+        {
+          "id": "op-values",
+          "label": "Get Values",
+          "value": "values"
+        },
+        {
+          "id": "op-validate",
+          "label": "Validate JSON",
+          "value": "validate"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "displayName": "Input Data",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{{data}}",
+      "description": "Input data to process"
+    },
+    {
+      "name": "path",
+      "displayName": "JSON Path",
+      "type": "string",
+      "placeholder": "user.profile.email or users[0].name",
+      "description": "Path to get/set. Supports dot notation and brackets",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "get",
+            "set"
+          ]
+        }
+      }
+    },
+    {
+      "name": "value",
+      "displayName": "Value to Set",
+      "type": "string",
+      "ui": {
+        "component": "textarea"
+      },
+      "description": "Value to set at the path",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "set"
+          ]
+        }
+      }
+    },
+    {
+      "name": "mergeWith",
+      "displayName": "Object to Merge",
+      "type": "json",
+      "ui": {
+        "component": "textarea"
+      },
+      "default": "{}",
+      "description": "Object to merge with input",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "merge"
+          ]
+        }
+      }
+    },
+    {
+      "name": "prettyPrint",
+      "displayName": "Pretty Print",
+      "type": "boolean",
+      "default": true,
+      "description": "Format JSON with indentation",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "stringify"
+          ]
+        }
+      }
+    },
+    {
+      "name": "indent",
+      "displayName": "Indent Size",
+      "type": "number",
+      "default": 2,
+      "description": "Number of spaces for indentation",
+      "displayOptions": {
+        "show": {
+          "operation": [
+            "stringify"
+          ]
+        }
+      }
+    }
+  ],
+  "executionCode": "const operation = node.properties.operation.value;\nlet input = node.properties.input.value;\nconst path = node.properties.path?.value;\nlet value = node.properties.value?.value;\nlet mergeWith = node.properties.mergeWith?.value;\nconst prettyPrint = node.properties.prettyPrint?.value !== false;\nconst indent = node.properties.indent?.value || 2;\n\nconst resolveValue = (val) => {\n  if (typeof val === 'string') {\n    if (val === '{{data}}') return data;\n    if (val.includes('{{data.')) {\n      const match = val.match(/\\{\\{data\\.([^}]+)\\}\\}/);\n      if (match) {\n        const pathParts = match[1].split('.');\n        let result = data;\n        for (const part of pathParts) {\n          result = result?.[part];\n        }\n        return result;\n      }\n    }\n  }\n  return val;\n};\n\ninput = resolveValue(input);\n\nconst getByPath = (obj, path) => {\n  if (!path) return obj;\n  const keys = path.replace(/\\[(\\d+)\\]/g, '.$1').split('.');\n  let result = obj;\n  for (const key of keys) {\n    if (result === null || result === undefined) return undefined;\n    result = result[key];\n  }\n  return result;\n};\n\nconst setByPath = (obj, path, value) => {\n  if (!path) return obj;\n  const keys = path.replace(/\\[(\\d+)\\]/g, '.$1').split('.');\n  let current = obj || {};\n  for (let i = 0; i < keys.length - 1; i++) {\n    const key = keys[i];\n    if (!(key in current) || typeof current[key] !== 'object') {\n      current[key] = {};\n    }\n    current = current[key];\n  }\n  current[keys[keys.length - 1]] = value;\n  return obj;\n};\n\nhelpers.log('Starting JSON Operations node');\nhelpers.log(`Operation: ${operation}`);\n\ntry {\n  switch (operation) {\n    case 'parse': {\n      if (typeof input !== 'string') {\n        helpers.error('Input must be a string for parse operation');\n        return { path: 'error', error: 'Input must be a string for parse operation', input };\n      }\n      helpers.log(`Parsing JSON string (${input.length} characters)`);\n      const parsed = JSON.parse(input);\n      helpers.log('JSON parsed successfully');\n      return { success: true, operation: 'parse', result: parsed };\n    }\n    case 'stringify': {\n      helpers.log(`Stringifying JSON (prettyPrint: ${prettyPrint}, indent: ${indent})`);\n      const replacer = (_k, v) => {\n        if (typeof v === 'bigint') return v.toString();\n        if (typeof v === 'function') return undefined;\n        return v;\n      };\n      try {\n        const stringified = prettyPrint ? JSON.stringify(input, replacer, indent) : JSON.stringify(input, replacer);\n        helpers.log(`Created JSON string (${stringified.length} characters)`);\n        return { success: true, operation: 'stringify', result: stringified, length: stringified.length };\n      } catch (e) {\n        helpers.error('JSON stringify failed:', e.message);\n        return { path: 'error', error: 'JSON stringify failed', details: e.message };\n      }\n    }\n    case 'get': {\n      if (!path) {\n        helpers.error('Path is required for get operation');\n        return { path: 'error', error: 'Path is required for get operation' };\n      }\n      helpers.log(`Getting value at path: ${path}`);\n      const result = getByPath(input, path);\n      try { if (result !== undefined) helpers.log(`Value found: ${JSON.stringify(result)}`);} catch {}\n      if (result === undefined) helpers.warn(`No value found at path: ${path}`);\n      return { success: true, operation: 'get', path, result, found: result !== undefined };\n    }\n    case 'set': {\n      if (!path) {\n        helpers.error('Path is required for set operation');\n        return { path: 'error', error: 'Path is required for set operation' };\n      }\n      helpers.log(`Setting value at path: ${path}`);\n      let parsedValue = value;\n      if (typeof value === 'string') {\n        try { parsedValue = JSON.parse(value); helpers.log('Parsed value from JSON string'); }\n        catch { helpers.log('Using value as string'); }\n      }\n      const result = JSON.parse(JSON.stringify(input || {}));\n      setByPath(result, path, parsedValue);\n      helpers.log('Value set successfully');\n      return { success: true, operation: 'set', path, result };\n    }\n    case 'merge': {\n      helpers.log('Merging objects');\n      if (typeof mergeWith === 'string') {\n        try { mergeWith = JSON.parse(mergeWith); helpers.log('Parsed merge object from JSON string'); }\n        catch (e) { helpers.error('Invalid JSON in merge object:', e.message); return { path: 'error', error: 'Invalid JSON in merge object', details: e.message }; }\n      }\n      const deepMerge = (target, source, seen = new WeakMap()) => {\n        if (source && typeof source === 'object') {\n          if (seen.has(source)) return seen.get(source);\n          const out = Array.isArray(target) ? [...(target || [])] : { ...(target || {}) };\n          seen.set(source, out);\n          for (const key in source) {\n            const val = source[key];\n            if (val && typeof val === 'object') {\n              out[key] = deepMerge(out[key] || (Array.isArray(val) ? [] : {}), val, seen);\n            } else {\n              out[key] = val;\n            }\n          }\n          return out;\n        }\n        return target;\n      };\n      try {\n        const result = deepMerge(input || {}, mergeWith || {});\n        helpers.log('Objects merged successfully');\n        return { success: true, operation: 'merge', result };\n      } catch (e) {\n        helpers.error('Deep merge failed:', e.message);\n        return { path: 'error', error: 'Deep merge failed', details: e.message };\n      }\n    }\n    case 'keys': {\n      if (typeof input !== 'object' || input === null) {\n        helpers.error('Input must be an object for keys operation');\n        return { path: 'error', error: 'Input must be an object for keys operation' };\n      }\n      const keys = Object.keys(input);\n      helpers.log(`Extracted ${keys.length} keys from object`);\n      return { success: true, operation: 'keys', result: keys, count: keys.length };\n    }\n    case 'values': {\n      if (typeof input !== 'object' || input === null) {\n        helpers.error('Input must be an object for values operation');\n        return { path: 'error', error: 'Input must be an object for values operation' };\n      }\n      const values = Object.values(input);\n      helpers.log(`Extracted ${values.length} values from object`);\n      return { success: true, operation: 'values', result: values, count: values.length };\n    }\n    case 'validate': {\n      helpers.log('Validating JSON');\n      if (typeof input === 'string') {\n        try { JSON.parse(input); helpers.log('JSON is valid'); return { success: true, operation: 'validate', valid: true, message: 'Valid JSON' }; }\n        catch (e) { helpers.warn('JSON is invalid:', e.message); return { success: true, operation: 'validate', valid: false, error: e.message }; }\n      } else {\n        helpers.log('Input is already a JSON object');\n        return { success: true, operation: 'validate', valid: true, message: 'Already a JSON object' };\n      }\n    }\n    default:\n      return { path: 'error', error: `Unknown operation: ${operation}` };\n  }\n} catch (error) {\n  helpers.error('JSON operation failed:', error);\n  return { error: error.message, operation, stack: error.stack };\n}\n",
+  "meta": {
+    "author": "Nodify System",
+    "createdAt": "2025-10-15"
+  }
+}
